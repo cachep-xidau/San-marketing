@@ -3,15 +3,15 @@
 /**
  * Hook: Real marketing data from Neon PostgreSQL
  *
- * Replaces mock data layer with real DB queries via /api/marketing.
- * Returns same data shapes as the legacy daily-metrics.ts functions.
+ * Fetches data via /api/marketing and aggregates by MONTH.
+ * Time ranges: this_month, last_month, 3m, 6m
  */
 
 import { useState, useEffect, useMemo } from 'react';
 import type { TimeRange } from '@/lib/daily-metrics';
 import { COMPANIES } from '@marketing-hub/shared';
 
-/* ---- Types (match existing interfaces) ---- */
+/* ---- Types ---- */
 export interface AggregatedMetrics {
     leads: number;
     clicks: number;
@@ -21,7 +21,7 @@ export interface AggregatedMetrics {
 }
 
 export interface DailySeriesPoint {
-    date: string;
+    date: string; // YYYY-MM label for monthly
     leads: number;
     clicks: number;
     impressions: number;
@@ -122,23 +122,47 @@ function numOrZero(v: number | string | null | undefined): number {
     return v;
 }
 
-function rangeToDays(range: TimeRange): number {
+/**
+ * Compute start/end date range based on month-based TimeRange.
+ * Uses the data's actual latest date as reference point.
+ */
+function getMonthRange(range: TimeRange): { start: string; end: string } {
+    // Reference date: Feb 2026 (latest data)
+    const now = new Date('2026-02-25');
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0-indexed
+
     switch (range) {
-        case '7d': return 7;
-        case '30d': return 30;
-        case '3m': return 90;
-        case '6m': return 180;
-        default: return 30;
+        case 'this_month': {
+            const start = new Date(year, month, 1);
+            const end = new Date(year, month + 1, 0); // last day of month
+            return { start: fmt(start), end: fmt(end) };
+        }
+        case 'last_month': {
+            const start = new Date(year, month - 1, 1);
+            const end = new Date(year, month, 0);
+            return { start: fmt(start), end: fmt(end) };
+        }
+        case '3m': {
+            const start = new Date(year, month - 2, 1);
+            const end = new Date(year, month + 1, 0);
+            return { start: fmt(start), end: fmt(end) };
+        }
+        case '6m': {
+            const start = new Date(year, month - 5, 1);
+            const end = new Date(year, month + 1, 0);
+            return { start: fmt(start), end: fmt(end) };
+        }
     }
 }
 
-function getDateRange(): { start: string; end: string } {
-    // Fetch ALL available data — no date filtering
-    // The time range selector will filter on the client side
-    return {
-        start: '2025-01-01',
-        end: '2026-12-31',
-    };
+function fmt(d: Date): string {
+    return d.toISOString().split('T')[0];
+}
+
+function toMonthLabel(dateStr: string): string {
+    const d = new Date(dateStr);
+    return `T${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 
 /* ---- Main Hook ---- */
@@ -146,23 +170,24 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
     const [data, setData] = useState<APIResponse | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Fetch ALL data once (no date filtering server-side)
+    const { start, end } = getMonthRange(timeRange);
+
+    // Fetch filtered data from API
     useEffect(() => {
         setLoading(true);
-        fetch('/api/marketing')
+        fetch(`/api/marketing?start=${start}&end=${end}`)
             .then(r => r.json())
             .then((d: APIResponse) => {
                 setData(d);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, []);
+    }, [start, end]);
 
     /* ---- Selector cards ---- */
     const selectorCards = useMemo<CompanyCard[]>(() => {
         if (!data) return [];
 
-        // All-company totals
         const allLeads = data.summary.reduce((s, r) => s + numOrZero(r._sum.totalLead), 0);
         const allSpend = data.summary.reduce((s, r) => s + numOrZero(r._sum.budgetActual), 0);
         const allQuality = data.summary.reduce((s, r) => s + numOrZero(r._sum.quality), 0);
@@ -175,11 +200,8 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
                 color: '#6B6F76',
                 initial: '∑',
                 metrics: {
-                    leads: allLeads,
-                    clicks: 0,
-                    impressions: 0,
-                    conversions: allQuality,
-                    spend: allSpend,
+                    leads: allLeads, clicks: 0, impressions: 0,
+                    conversions: allQuality, spend: allSpend,
                 },
                 delta: { leads: 0, clicks: 0, impressions: 0, conversions: 0, spend: 0 },
                 campaigns: uniqueCampaigns,
@@ -199,9 +221,7 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
                 color: co.color,
                 initial: co.shortName.charAt(0),
                 metrics: {
-                    leads: numOrZero(row?._sum.totalLead),
-                    clicks: 0,
-                    impressions: 0,
+                    leads: numOrZero(row?._sum.totalLead), clicks: 0, impressions: 0,
                     conversions: numOrZero(row?._sum.quality),
                     spend: numOrZero(row?._sum.budgetActual),
                 },
@@ -214,30 +234,34 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
         return cards;
     }, [data]);
 
-    /* ---- Daily series ---- */
+    /* ---- Monthly series (aggregated by month) ---- */
     const dailySeries = useMemo<DailySeriesPoint[]>(() => {
         if (!data) return [];
 
-        // Filter by activeCard
         const filtered = activeCard === 'all'
             ? data.daily
             : data.daily.filter(d => d.companyId === activeCard);
 
-        // Group by date
-        const byDate = new Map<string, { leads: number; spend: number; quality: number }>();
+        // Group by MONTH instead of day
+        const byMonth = new Map<string, { leads: number; spend: number; quality: number }>();
         for (const d of filtered) {
-            const dateKey = d.date.split('T')[0];
-            const existing = byDate.get(dateKey) || { leads: 0, spend: 0, quality: 0 };
+            const monthKey = toMonthLabel(d.date);
+            const existing = byMonth.get(monthKey) || { leads: 0, spend: 0, quality: 0 };
             existing.leads += numOrZero(d._sum.totalLead);
             existing.spend += numOrZero(d._sum.budgetActual);
             existing.quality += numOrZero(d._sum.quality);
-            byDate.set(dateKey, existing);
+            byMonth.set(monthKey, existing);
         }
 
-        return Array.from(byDate.entries())
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([date, v]) => ({
-                date,
+        // Sort by date (T1/2025 < T2/2025 < ... < T12/2025 < T1/2026)
+        return Array.from(byMonth.entries())
+            .sort(([a], [b]) => {
+                const [mA, yA] = a.replace('T', '').split('/').map(Number);
+                const [mB, yB] = b.replace('T', '').split('/').map(Number);
+                return yA !== yB ? yA - yB : mA - mB;
+            })
+            .map(([month, v]) => ({
+                date: month,
                 leads: v.leads,
                 clicks: 0,
                 impressions: 0,
@@ -254,7 +278,6 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
             ? data.channels
             : data.channels.filter(c => c.companyId === activeCard);
 
-        // Group by channel
         const byChannel = new Map<string, ChannelEntry>();
         for (const ch of filtered) {
             const key = ch.channel;

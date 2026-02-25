@@ -15,7 +15,7 @@ const COMPANY_LOGOS: Record<string, string> = {
     tgil: '/logos/thegioiimplant.png',
 };
 
-const TIME_OPTIONS: TimeRange[] = ['7d', '30d', '3m', '6m'];
+const TIME_OPTIONS: TimeRange[] = ['this_month', 'last_month', '3m', '6m'];
 
 /* ====== X-Axis Label Generator ====== */
 const WEEKDAY_VN = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -27,57 +27,14 @@ interface AxisLabel {
     position: number;
 }
 
-function getXAxisLabels(series: DailySeriesPoint[], range: TimeRange): AxisLabel[] {
+function getXAxisLabels(series: DailySeriesPoint[], _range: TimeRange): AxisLabel[] {
     if (series.length === 0) return [];
     const len = series.length;
-
-    switch (range) {
-        case '7d': {
-            // Every day — show weekday name
-            return series.map((d, i) => {
-                const date = new Date(d.date + 'T00:00:00');
-                return { label: WEEKDAY_VN[date.getDay()], position: i / (len - 1) };
-            });
-        }
-        case '30d': {
-            // One label per week — show dd/mm
-            const labels: AxisLabel[] = [];
-            for (let i = 0; i < len; i += 7) {
-                const date = new Date(series[i].date + 'T00:00:00');
-                labels.push({
-                    label: `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`,
-                    position: i / (len - 1),
-                });
-            }
-            return labels;
-        }
-        case '3m': {
-            // Every 10 days
-            const labels: AxisLabel[] = [];
-            for (let i = 0; i < len; i += 10) {
-                const date = new Date(series[i].date + 'T00:00:00');
-                labels.push({
-                    label: `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`,
-                    position: i / (len - 1),
-                });
-            }
-            return labels;
-        }
-        case '6m': {
-            // One label per month
-            const labels: AxisLabel[] = [];
-            let lastMonth = -1;
-            for (let i = 0; i < len; i++) {
-                const date = new Date(series[i].date + 'T00:00:00');
-                const month = date.getMonth();
-                if (month !== lastMonth) {
-                    lastMonth = month;
-                    labels.push({ label: MONTH_VN[month], position: i / (len - 1) });
-                }
-            }
-            return labels;
-        }
-    }
+    // Monthly data — use the month label directly (e.g. T1/2025)
+    return series.map((d, i) => ({
+        label: d.date, // Already "T1/2025" format from hook
+        position: len === 1 ? 0.5 : i / (len - 1),
+    }));
 }
 
 /* ====== Sparkline SVG with X-Axis + Tooltip ====== */
@@ -282,7 +239,7 @@ function ChartCard({
 export default function CMODashboard() {
     const [user, setUser] = useState<{ name: string; role: string } | null>(null);
     const { selectedCompanyId } = useCompany();
-    const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+    const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
     const [activeCard, setActiveCard] = useState<string>('all');
 
     // Fetch user session

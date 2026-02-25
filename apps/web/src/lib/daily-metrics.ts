@@ -9,7 +9,7 @@
 import { getCampaigns, type CampaignItem } from './campaigns';
 
 /* ---- Types ---- */
-export type TimeRange = '7d' | '30d' | '3m' | '6m';
+export type TimeRange = 'this_month' | 'last_month' | '3m' | '6m';
 
 export interface DailyEntry {
     date: string; // YYYY-MM-DD
@@ -166,8 +166,8 @@ function ensureCache() {
 
 export function rangeToDays(range: TimeRange): number {
     switch (range) {
-        case '7d': return 7;
-        case '30d': return 30;
+        case 'this_month': return 30;
+        case 'last_month': return 30;
         case '3m': return 90;
         case '6m': return 180;
     }
@@ -175,8 +175,8 @@ export function rangeToDays(range: TimeRange): number {
 
 export function rangeToLabel(range: TimeRange): string {
     switch (range) {
-        case '7d': return '7 ngày';
-        case '30d': return '30 ngày';
+        case 'this_month': return 'Tháng này';
+        case 'last_month': return 'Tháng trước';
         case '3m': return '3 tháng';
         case '6m': return '6 tháng';
     }
