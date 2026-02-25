@@ -19,6 +19,13 @@ import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
 import { IconTarget, IconDollar, IconChart } from '@/app/components/icons';
 
+/* ---- Company Logos ---- */
+const COMPANY_LOGOS: Record<string, string> = {
+    san: '/logos/san-dentist.png',
+    teennie: '/logos/teennie.webp',
+    tgil: '/logos/thegioiimplant.png',
+};
+
 const TIME_OPTIONS: TimeRange[] = ['7d', '30d', '3m', '6m'];
 
 /* ====== X-Axis Label Generator ====== */
@@ -462,12 +469,25 @@ export default function CMODashboard() {
                         >
                             {/* Name + badge */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                                <div style={{
-                                    width: 26, height: 26, borderRadius: 6,
-                                    background: card.color,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: 'white', fontWeight: 700, fontSize: '0.7rem',
-                                }}>{card.initial}</div>
+                                {COMPANY_LOGOS[card.id] ? (
+                                    <img
+                                        src={COMPANY_LOGOS[card.id]}
+                                        alt={card.label}
+                                        style={{
+                                            width: 26, height: 26, borderRadius: 6,
+                                            objectFit: 'contain',
+                                            background: 'white',
+                                            border: '1px solid var(--border)',
+                                        }}
+                                    />
+                                ) : (
+                                    <div style={{
+                                        width: 26, height: 26, borderRadius: 6,
+                                        background: card.color,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        color: 'white', fontWeight: 700, fontSize: '0.7rem',
+                                    }}>{card.initial}</div>
+                                )}
                                 <span style={{ fontWeight: 600, fontSize: '0.85rem', flex: 1 }}>{card.label}</span>
                                 {isActive && (
                                     <span style={{
