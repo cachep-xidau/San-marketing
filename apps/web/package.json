@@ -13,6 +13,7 @@
     "dependencies": {
         "@marketing-hub/shared": "*",
         "@prisma/client": "^6.4.1",
+        "@vercel/analytics": "^1.6.1",
         "bcryptjs": "^3.0.3",
         "googleapis": "^171.4.0",
         "jose": "^6.1.3",
