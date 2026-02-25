@@ -7,6 +7,7 @@ import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
 import { IconUpload, IconPlus, IconCheck, IconClose, IconDownload, IconUsers, IconFilter, IconFile } from '@/app/components/icons';
 import TimeFilterBar from '@/app/components/TimeFilterBar';
+import DatePicker from '@/app/components/DatePicker';
 
 /* ---- Lead entry row type (mirrors the _NEW sheets) ---- */
 interface LeadEntry {
@@ -377,20 +378,16 @@ export default function StaffDashboard() {
                 </select>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem' }}>
                     <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Từ</span>
-                    <input
-                        className="input"
-                        type="date"
-                        style={{ width: 'auto', fontSize: '0.8rem', padding: '0.4rem 0.6rem' }}
+                    <DatePicker
                         value={filterStartDate}
-                        onChange={e => setFilterStartDate(e.target.value)}
+                        onChange={setFilterStartDate}
+                        placeholder="Từ ngày"
                     />
                     <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>đến</span>
-                    <input
-                        className="input"
-                        type="date"
-                        style={{ width: 'auto', fontSize: '0.8rem', padding: '0.4rem 0.6rem' }}
+                    <DatePicker
                         value={filterEndDate}
-                        onChange={e => setFilterEndDate(e.target.value)}
+                        onChange={setFilterEndDate}
+                        placeholder="Đến ngày"
                     />
                     {(filterStartDate || filterEndDate) && (
                         <button

@@ -198,7 +198,7 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string, custo
 
     /* ---- Selector cards ---- */
     const selectorCards = useMemo<CompanyCard[]>(() => {
-        if (!data) return [];
+        if (!data?.summary) return [];
 
         const allLeads = data.summary.reduce((s, r) => s + numOrZero(r._sum.totalLead), 0);
         const allSpend = data.summary.reduce((s, r) => s + numOrZero(r._sum.budgetActual), 0);
@@ -251,7 +251,7 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string, custo
 
     /* ---- Monthly series (aggregated by month) ---- */
     const dailySeries = useMemo<DailySeriesPoint[]>(() => {
-        if (!data) return [];
+        if (!data?.daily) return [];
 
         const filtered = activeCard === 'all'
             ? data.daily
@@ -287,7 +287,7 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string, custo
 
     /* ---- Channel breakdown ---- */
     const channelBreakdown = useMemo<ChannelEntry[]>(() => {
-        if (!data) return [];
+        if (!data?.channels) return [];
 
         const filtered = activeCard === 'all'
             ? data.channels
@@ -308,7 +308,7 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string, custo
 
     /* ---- Totals for active card ---- */
     const totals = useMemo<AggregatedMetrics>(() => {
-        if (!data) return { leads: 0, clicks: 0, impressions: 0, conversions: 0, spend: 0 };
+        if (!data?.summary) return { leads: 0, clicks: 0, impressions: 0, conversions: 0, spend: 0 };
         const card = selectorCards.find(c => c.id === activeCard);
         return card?.metrics || { leads: 0, clicks: 0, impressions: 0, conversions: 0, spend: 0 };
     }, [selectorCards, activeCard]);

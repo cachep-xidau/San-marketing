@@ -5,6 +5,7 @@ import { COMPANIES, CHANNEL_LABELS, CHANNEL_COLORS, STATUS_COLORS, formatVND } f
 import { getCampaigns, getCompanyStats, toggleCampaignStatus, addCampaign, type CampaignItem } from '@/lib/campaigns';
 import { useCompany } from '../layout';
 import { IconPlus, IconClose, IconTarget, IconDollar, IconChart, IconFilter, IconEye } from '@/app/components/icons';
+import DatePicker from '@/app/components/DatePicker';
 
 /* ====== Trend Badge (reusable) ====== */
 function TrendBadge({ value }: { value: number }) {
@@ -406,8 +407,22 @@ function CreateModal({ companyId, onClose, onCreate }: { companyId: string; onCl
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                    <div className="form-group"><label>Ngày bắt đầu</label><input type="date" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} /></div>
-                    <div className="form-group"><label>Ngày kết thúc</label><input type="date" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} /></div>
+                    <div className="form-group">
+                        <label>Ngày bắt đầu</label>
+                        <DatePicker
+                            value={form.startDate}
+                            onChange={v => setForm({ ...form, startDate: v })}
+                            placeholder="Chọn ngày"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Ngày kết thúc</label>
+                        <DatePicker
+                            value={form.endDate}
+                            onChange={v => setForm({ ...form, endDate: v })}
+                            placeholder="Chọn ngày"
+                        />
+                    </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
