@@ -1,11 +1,79 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { COMPANIES, CHANNEL_LABELS, CHANNEL_COLORS, STATUS_COLORS, formatVND } from '@marketing-hub/shared';
-import { getCampaigns, getCompanyStats, toggleCampaignStatus, addCampaign, type CampaignItem } from '@/lib/campaigns';
 import { useCompany } from '../layout';
 import { IconPlus, IconClose, IconTarget, IconDollar, IconChart, IconFilter, IconEye } from '@/app/components/icons';
 import DatePicker from '@/app/components/DatePicker';
+
+/* ---- Types ---- */
+interface CampaignRow {
+    id: string;
+    companyId: string;
+    name: string;
+    channel: string;
+    status: string;
+    startDate?: string;
+    endDate?: string;
+    metrics: { leads: number; spend: number; quality: number };
+}
+
+/* ---- API response types ---- */
+interface APICampaign {
+    companyId: string;
+    channel: string;
+    campaignName: string;
+    _sum: {
+        totalLead: number | null;
+        spam: number | null;
+        potential: number | null;
+        quality: number | null;
+        booked: number | null;
+        arrived: number | null;
+        closed: number | null;
+        bill: string | null;
+        budgetTarget: string | null;
+        budgetActual: string | null;
+    };
+    _count: number;
+}
+
+interface APIMasterStatus {
+    companyId: string;
+    status: string;
+    _count: number;
+}
+
+interface APISummary {
+    companyId: string;
+    _sum: {
+        totalLead: number | null;
+        budgetActual: string | null;
+    };
+}
+
+interface APIMasterCampaign {
+    companyId: string;
+    campaignId: number;
+    channel: string;
+    name: string;
+    status: string;
+    startDate?: string;
+    endDate?: string;
+}
+
+interface APIResponse {
+    summary: APISummary[];
+    campaigns: APICampaign[];
+    masterStatus: APIMasterStatus[];
+}
+
+/* ---- Helpers ---- */
+function numOrZero(v: number | string | null | undefined): number {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === 'string') return parseFloat(v) || 0;
+    return v;
+}
 
 /* ====== Trend Badge (reusable) ====== */
 function TrendBadge({ value }: { value: number }) {
@@ -28,24 +96,109 @@ export default function ManagerDashboard() {
     const [showCreate, setShowCreate] = useState(false);
     const [detailId, setDetailId] = useState<string | null>(null);
     const [filterChannel, setFilterChannel] = useState('all');
-    const [filterStatus, setFilterStatus] = useState('BẬT'); // Default: only active
+    const [filterStatus, setFilterStatus] = useState('BẬT');
 
     /* ---- Table sort state ---- */
-    const [sortKey, setSortKey] = useState<'leads' | 'spend' | 'clicks'>('leads');
+    const [sortKey, setSortKey] = useState<'leads' | 'spend' | 'quality'>('leads');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     const isPortfolio = selectedCompanyId === 'all';
     const [activeCard, setActiveCard] = useState<string>('all');
 
-    // Effective company for data
     const effectiveCompanyId = isPortfolio
         ? (activeCard === 'all' ? undefined : activeCard)
         : selectedCompanyId;
 
-    const campaigns = useMemo(
-        () => getCampaigns(effectiveCompanyId),
-        [effectiveCompanyId, forceUpdate],
-    );
+    // Real data from API
+    const [apiData, setApiData] = useState<APIResponse | null>(null);
+    const [masterCampaigns, setMasterCampaigns] = useState<APIMasterCampaign[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch real data
+    useEffect(() => {
+        setLoading(true);
+        Promise.all([
+            fetch('/api/marketing').then(r => r.ok ? r.json() : null),
+            fetch('/api/marketing/campaigns').then(r => r.ok ? r.json() : null).catch(() => null),
+        ]).then(([marketing, master]) => {
+            if (marketing) setApiData(marketing);
+            if (master?.campaigns) setMasterCampaigns(master.campaigns);
+            setLoading(false);
+        }).catch(() => setLoading(false));
+    }, [forceUpdate]);
+
+    // Build campaign rows from API data — merge master status with entry metrics
+    const campaigns = useMemo<CampaignRow[]>(() => {
+        if (!apiData?.campaigns) return [];
+
+        // Build metrics map from MarketingEntry groupBy
+        const metricsMap = new Map<string, { leads: number; spend: number; quality: number; channel: string; companyId: string }>();
+        for (const c of apiData.campaigns) {
+            const key = `${c.companyId}:${c.campaignName}`;
+            const existing = metricsMap.get(key);
+            if (existing) {
+                existing.leads += numOrZero(c._sum.totalLead);
+                existing.spend += numOrZero(c._sum.budgetActual);
+                existing.quality += numOrZero(c._sum.quality);
+            } else {
+                metricsMap.set(key, {
+                    leads: numOrZero(c._sum.totalLead),
+                    spend: numOrZero(c._sum.budgetActual),
+                    quality: numOrZero(c._sum.quality),
+                    channel: c.channel,
+                    companyId: c.companyId,
+                });
+            }
+        }
+
+        // Build status map from CampaignMaster
+        const statusMap = new Map<string, { status: string; startDate?: string; endDate?: string }>();
+        for (const m of masterCampaigns) {
+            statusMap.set(`${m.companyId}:${m.name}`, { status: m.status, startDate: m.startDate, endDate: m.endDate });
+        }
+
+        // Merge: every unique campaign name gets a row
+        const rows: CampaignRow[] = [];
+        let idx = 0;
+        for (const [key, metrics] of metricsMap) {
+            const master = statusMap.get(key);
+            const [companyId, ...nameParts] = key.split(':');
+            const name = nameParts.join(':');
+            rows.push({
+                id: `cm-${idx++}`,
+                companyId,
+                name,
+                channel: metrics.channel,
+                status: master?.status || 'BẬT',
+                startDate: master?.startDate,
+                endDate: master?.endDate,
+                metrics: { leads: metrics.leads, spend: metrics.spend, quality: metrics.quality },
+            });
+        }
+
+        // Also add master campaigns with no entry data
+        for (const m of masterCampaigns) {
+            const key = `${m.companyId}:${m.name}`;
+            if (!metricsMap.has(key)) {
+                rows.push({
+                    id: `cm-${idx++}`,
+                    companyId: m.companyId,
+                    name: m.name,
+                    channel: m.channel,
+                    status: m.status,
+                    startDate: m.startDate,
+                    endDate: m.endDate,
+                    metrics: { leads: 0, spend: 0, quality: 0 },
+                });
+            }
+        }
+
+        // Filter by company
+        if (effectiveCompanyId) {
+            return rows.filter(r => r.companyId === effectiveCompanyId);
+        }
+        return rows;
+    }, [apiData, masterCampaigns, effectiveCompanyId]);
 
     // Filtered campaigns
     const filtered = useMemo(() => {
@@ -58,34 +211,27 @@ export default function ManagerDashboard() {
     const sortedFiltered = useMemo(() => {
         const arr = [...filtered];
         arr.sort((a, b) => {
-            const va = sortKey === 'leads' ? a.metrics.leads : sortKey === 'spend' ? a.metrics.spend : a.metrics.clicks;
-            const vb = sortKey === 'leads' ? b.metrics.leads : sortKey === 'spend' ? b.metrics.spend : b.metrics.clicks;
+            const va = a.metrics[sortKey];
+            const vb = b.metrics[sortKey];
             return sortDir === 'desc' ? vb - va : va - vb;
         });
         return arr;
     }, [filtered, sortKey, sortDir]);
 
-    const handleSort = useCallback((key: 'leads' | 'spend' | 'clicks') => {
+    const handleSort = useCallback((key: 'leads' | 'spend' | 'quality') => {
         if (sortKey === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
         else { setSortKey(key); setSortDir('desc'); }
     }, [sortKey]);
 
-    /* ---- Max values for inline bars ---- */
     const maxLeads = useMemo(() => Math.max(...sortedFiltered.map(c => c.metrics.leads), 1), [sortedFiltered]);
     const maxSpend = useMemo(() => Math.max(...sortedFiltered.map(c => c.metrics.spend), 1), [sortedFiltered]);
 
     const detailCampaign = detailId ? campaigns.find(c => c.id === detailId) : null;
 
-    // Channels in current view
     const channelsInView = useMemo(() => {
         const set = new Set(campaigns.map(c => c.channel));
         return Array.from(set);
     }, [campaigns]);
-
-    function handleToggle(id: string) {
-        toggleCampaignStatus(id);
-        refresh();
-    }
 
     function handleCardSelect(id: string) {
         setActiveCard(id);
@@ -93,11 +239,15 @@ export default function ManagerDashboard() {
         setFilterStatus('BẬT');
     }
 
-    // ---- Selector card data ----
+    // Selector card data from real API
     const selectorCards = useMemo(() => {
-        const allCampaigns = getCampaigns();
-        const allLeads = allCampaigns.reduce((s, c) => s + c.metrics.leads, 0);
-        const allSpend = allCampaigns.reduce((s, c) => s + c.metrics.spend, 0);
+        if (!apiData?.summary) return [];
+        const ms = apiData.masterStatus || [];
+
+        const allLeads = apiData.summary.reduce((s, r) => s + numOrZero(r._sum.totalLead), 0);
+        const allSpend = apiData.summary.reduce((s, r) => s + numOrZero(r._sum.budgetActual), 0);
+        const allActive = ms.filter(m => m.status === 'BẬT').reduce((s, m) => s + m._count, 0);
+        const allTotal = ms.reduce((s, m) => s + m._count, 0);
 
         return [
             {
@@ -108,25 +258,29 @@ export default function ManagerDashboard() {
                 leads: allLeads,
                 spend: allSpend,
                 cpl: allLeads > 0 ? allSpend / allLeads : 0,
-                campaigns: allCampaigns.length,
-                active: allCampaigns.filter(c => c.status === 'BẬT').length,
+                campaigns: allTotal,
+                active: allActive,
             },
             ...COMPANIES.map(co => {
-                const stats = getCompanyStats(co.id);
+                const row = apiData.summary.find(s => s.companyId === co.id);
+                const coActive = ms.filter(m => m.companyId === co.id && m.status === 'BẬT').reduce((s, m) => s + m._count, 0);
+                const coTotal = ms.filter(m => m.companyId === co.id).reduce((s, m) => s + m._count, 0);
+                const leads = numOrZero(row?._sum.totalLead);
+                const spend = numOrZero(row?._sum.budgetActual);
                 return {
                     id: co.id,
                     label: co.name,
                     color: co.color,
                     initial: co.shortName.charAt(0),
-                    leads: stats.totalLeads,
-                    spend: stats.totalSpend,
-                    cpl: stats.totalLeads > 0 ? stats.totalSpend / stats.totalLeads : 0,
-                    campaigns: stats.total,
-                    active: stats.active,
+                    leads,
+                    spend,
+                    cpl: leads > 0 ? spend / leads : 0,
+                    campaigns: coTotal,
+                    active: coActive,
                 };
             }),
         ];
-    }, [forceUpdate]);
+    }, [apiData]);
 
     const activeLabel = activeCard === 'all'
         ? 'Tất cả công ty'
@@ -170,7 +324,6 @@ export default function ManagerDashboard() {
                                 onMouseEnter={e => { if (!isActive) { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; } }}
                                 onMouseLeave={e => { if (!isActive) { e.currentTarget.style.opacity = '0.55'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; } }}
                             >
-                                {/* Name + badge */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                                     <div style={{
                                         width: 26, height: 26, borderRadius: 6,
@@ -188,7 +341,6 @@ export default function ManagerDashboard() {
                                     )}
                                 </div>
 
-                                {/* Metrics: 2x2 grid */}
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 0.25rem' }}>
                                     <div>
                                         <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
@@ -239,16 +391,16 @@ export default function ManagerDashboard() {
                 <table className="table" style={{ fontSize: 'var(--font-sm)', whiteSpace: 'nowrap' }}>
                     <thead>
                         <tr style={{ background: 'var(--bg-card)' }}>
-                            <th style={{ width: 60 }}>BẬT/TẮT</th>
+                            <th style={{ width: 60 }}>TRẠNG THÁI</th>
                             <th>TÊN CHIẾN DỊCH</th>
                             <th>KÊNH</th>
-                            {(['leads', 'spend', 'clicks'] as const).map(key => (
+                            {(['leads', 'spend', 'quality'] as const).map(key => (
                                 <th
                                     key={key}
                                     onClick={() => handleSort(key)}
                                     style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', ...(key === 'leads' ? { fontWeight: 700, color: 'var(--primary)' } : {}) }}
                                 >
-                                    {{ leads: 'LEADS', spend: 'CHI TIÊU', clicks: 'CLICKS' }[key]}
+                                    {{ leads: 'LEADS', spend: 'CHI TIÊU', quality: 'CHẤT LƯỢNG' }[key]}
                                     {sortKey === key && <span style={{ marginLeft: 4, fontSize: 'var(--font-sm)' }}>{sortDir === 'desc' ? '↓' : '↑'}</span>}
                                 </th>
                             ))}
@@ -259,28 +411,21 @@ export default function ManagerDashboard() {
                         {sortedFiltered.map(c => (
                             <tr key={c.id} style={{ opacity: c.status === 'TẮT' ? 0.6 : 1 }}>
                                 <td>
-                                    <div
-                                        onClick={() => handleToggle(c.id)}
-                                        style={{
-                                            width: 40, height: 22, borderRadius: 11,
-                                            background: c.status === 'BẬT' ? 'var(--success)' : 'var(--border)',
-                                            cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: 18, height: 18, borderRadius: '50%', background: 'white',
-                                            position: 'absolute', top: 2,
-                                            left: c.status === 'BẬT' ? 20 : 2,
-                                            transition: 'left 0.2s',
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                                        }} />
-                                    </div>
+                                    <span style={{
+                                        display: 'inline-block',
+                                        padding: '0.15rem 0.5rem',
+                                        borderRadius: 4,
+                                        fontSize: 'var(--font-xs)',
+                                        fontWeight: 600,
+                                        background: c.status === 'BẬT' ? 'var(--success)' : 'var(--border)',
+                                        color: c.status === 'BẬT' ? 'white' : 'var(--text-muted)',
+                                    }}>{c.status}</span>
                                 </td>
                                 <td style={{ fontWeight: 500, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</td>
                                 <td><span style={{ color: CHANNEL_COLORS[c.channel] || '#6B7280' }}>●</span> {CHANNEL_LABELS[c.channel] || c.channel}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{c.metrics.leads.toLocaleString('vi-VN')}</td>
                                 <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{c.metrics.spend > 0 ? formatVND(c.metrics.spend) : '—'}</td>
-                                <td style={{ textAlign: 'center' }}>{c.metrics.clicks > 0 ? c.metrics.clicks.toLocaleString('vi-VN') : '—'}</td>
+                                <td style={{ textAlign: 'center' }}>{c.metrics.quality > 0 ? c.metrics.quality.toLocaleString('vi-VN') : '—'}</td>
                                 <td>
                                     <button
                                         onClick={() => setDetailId(c.id)}
@@ -303,8 +448,8 @@ export default function ManagerDashboard() {
                             <div>
                                 <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{detailCampaign.name}</h2>
                                 <div style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                                    <span style={{ color: CHANNEL_COLORS[detailCampaign.channel] }}>● {CHANNEL_LABELS[detailCampaign.channel]}</span>
-                                    <span style={{ color: STATUS_COLORS[detailCampaign.status] }}>{detailCampaign.status}</span>
+                                    <span style={{ color: CHANNEL_COLORS[detailCampaign.channel] }}>● {CHANNEL_LABELS[detailCampaign.channel] || detailCampaign.channel}</span>
+                                    <span style={{ color: detailCampaign.status === 'BẬT' ? 'var(--success)' : 'var(--text-muted)' }}>{detailCampaign.status}</span>
                                 </div>
                             </div>
                             <button onClick={() => setDetailId(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><IconClose size={20} /></button>
@@ -316,35 +461,18 @@ export default function ManagerDashboard() {
                             </div>
                         )}
 
-                        {/* Duration badge */}
-                        {detailCampaign.startDate && (() => {
-                            const start = new Date(detailCampaign.startDate + 'T00:00:00');
-                            const end = detailCampaign.endDate ? new Date(detailCampaign.endDate + 'T00:00:00') : new Date();
-                            const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000));
-                            return (
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-sm)', color: 'var(--text-muted)', background: 'var(--bg)', padding: '0.25rem 0.6rem', borderRadius: 6, marginBottom: '1rem' }}>
-                                    📅 {days} ngày {!detailCampaign.endDate && '(đang chạy)'}
-                                </div>
-                            );
-                        })()}
-
                         <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
                             <IconChart size={14} /> Chỉ số
                         </h3>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <div className="kpi-card"><h3>Impressions</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{detailCampaign.metrics.impressions.toLocaleString('vi-VN')}</div></div>
-                            <div className="kpi-card"><h3>Clicks</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{detailCampaign.metrics.clicks.toLocaleString('vi-VN')}</div></div>
                             <div className="kpi-card"><h3>Leads</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--primary)' }}>{detailCampaign.metrics.leads.toLocaleString('vi-VN')}</div></div>
-                            <div className="kpi-card"><h3>Conversions</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--success)' }}>{detailCampaign.metrics.conversions.toLocaleString('vi-VN')}</div></div>
+                            <div className="kpi-card"><h3>Chất lượng</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--success)' }}>{detailCampaign.metrics.quality.toLocaleString('vi-VN')}</div></div>
                             <div className="kpi-card"><h3><IconDollar size={14} /> Chi tiêu</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{detailCampaign.metrics.spend > 0 ? formatVND(detailCampaign.metrics.spend) : '—'}</div></div>
                             {detailCampaign.metrics.leads > 0 && detailCampaign.metrics.spend > 0 && (
                                 <div className="kpi-card"><h3><IconTarget size={14} /> CPL</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{formatVND(detailCampaign.metrics.spend / detailCampaign.metrics.leads)}</div></div>
                             )}
-                            {detailCampaign.metrics.impressions > 0 && detailCampaign.metrics.clicks > 0 && (
-                                <div className="kpi-card"><h3>CTR</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{(detailCampaign.metrics.clicks / detailCampaign.metrics.impressions * 100).toFixed(2)}%</div></div>
-                            )}
-                            {detailCampaign.metrics.leads > 0 && detailCampaign.metrics.conversions > 0 && (
-                                <div className="kpi-card"><h3>Tỷ lệ chuyển đổi</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--success)' }}>{(detailCampaign.metrics.conversions / detailCampaign.metrics.leads * 100).toFixed(1)}%</div></div>
+                            {detailCampaign.metrics.leads > 0 && detailCampaign.metrics.quality > 0 && (
+                                <div className="kpi-card"><h3>Tỷ lệ chất lượng</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--success)' }}>{(detailCampaign.metrics.quality / detailCampaign.metrics.leads * 100).toFixed(1)}%</div></div>
                             )}
                         </div>
                     </div>
@@ -368,7 +496,7 @@ function CreateModal({ companyId, onClose, onCreate }: { companyId: string; onCl
 
     function handleSubmit() {
         if (!form.name || !form.channel) return;
-        addCampaign({ companyId: coId, ...form });
+        // TODO: Call API to create campaign in CampaignMaster
         onCreate();
     }
 

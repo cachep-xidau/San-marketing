@@ -1,64 +1,76 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CHANNEL_LABELS, CHANNEL_COLORS, formatVND } from '@marketing-hub/shared';
-import type { ChannelType } from '@marketing-hub/shared';
 import { type TimeRange } from '@/lib/daily-metrics';
 import { IconCheck, IconAlertTriangle, IconTrendUp, IconChart } from '@/app/components/icons';
 import TimeFilterBar from '@/app/components/TimeFilterBar';
 
-/* ---- Data ---- */
+/* ---- Types ---- */
 interface ChannelMetrics {
-    channel: ChannelType;
+    channel: string;
     spend: number;
     leads: number;
     cpl: number;
-    impressions: number;
-    clicks: number;
-    ctr: number;
-    conversions: number;
-    roas: number;
+    quality: number;
     campaigns: number;
 }
 
-type MockTimeRange = '7d' | '30d' | '90d';
+/* ---- API response types ---- */
+interface APIChannel {
+    companyId: string;
+    channel: string;
+    _sum: {
+        totalLead: number | null;
+        quality: number | null;
+        budgetActual: string | null;
+    };
+}
 
-const DATA: Record<MockTimeRange, ChannelMetrics[]> = {
-    '7d': [
-        { channel: 'FACEBOOK', spend: 42_000_000, leads: 230, cpl: 182_608, impressions: 185_000, clicks: 12_400, ctr: 6.7, conversions: 45, roas: 3.4, campaigns: 5 },
-        { channel: 'TIKTOK', spend: 28_000_000, leads: 142, cpl: 197_183, impressions: 320_000, clicks: 18_200, ctr: 5.7, conversions: 28, roas: 2.9, campaigns: 3 },
-        { channel: 'ZALO', spend: 15_000_000, leads: 68, cpl: 220_588, impressions: 95_000, clicks: 5_800, ctr: 6.1, conversions: 12, roas: 2.1, campaigns: 2 },
-    ],
-    '30d': [
-        { channel: 'FACEBOOK', spend: 125_400_000, leads: 680, cpl: 184_411, impressions: 720_000, clicks: 48_200, ctr: 6.7, conversions: 134, roas: 3.2, campaigns: 8 },
-        { channel: 'TIKTOK', spend: 78_200_000, leads: 390, cpl: 200_513, impressions: 1_200_000, clicks: 68_400, ctr: 5.7, conversions: 78, roas: 2.8, campaigns: 4 },
-        { channel: 'ZALO', spend: 42_200_000, leads: 177, cpl: 238_418, impressions: 310_000, clicks: 18_600, ctr: 6.0, conversions: 35, roas: 2.1, campaigns: 3 },
-    ],
-    '90d': [
-        { channel: 'FACEBOOK', spend: 380_000_000, leads: 2050, cpl: 185_365, impressions: 2_100_000, clicks: 142_800, ctr: 6.8, conversions: 410, roas: 3.3, campaigns: 12 },
-        { channel: 'TIKTOK', spend: 235_000_000, leads: 1180, cpl: 199_152, impressions: 3_600_000, clicks: 201_600, ctr: 5.6, conversions: 236, roas: 2.7, campaigns: 5 },
-        { channel: 'ZALO', spend: 128_000_000, leads: 540, cpl: 237_037, impressions: 920_000, clicks: 55_200, ctr: 6.0, conversions: 108, roas: 2.0, campaigns: 4 },
-    ],
-};
+interface APICampaign {
+    companyId: string;
+    channel: string;
+    campaignName: string;
+}
 
-/* Trend data for sparklines */
-const DAILY_LEADS: Record<MockTimeRange, Record<ChannelType, number[]>> = {
-    '7d': {
-        FACEBOOK: [28, 35, 32, 38, 30, 34, 33],
-        TIKTOK: [18, 22, 20, 19, 21, 23, 19],
-        ZALO: [8, 10, 12, 9, 11, 8, 10],
-    },
-    '30d': {
-        FACEBOOK: [20, 22, 25, 23, 28, 24, 20, 26, 30, 22, 18, 25, 27, 23, 20, 24, 28, 22, 25, 23, 27, 24, 22, 20, 26, 28, 25, 23, 22, 24],
-        TIKTOK: [10, 12, 14, 11, 15, 13, 12, 14, 16, 11, 10, 13, 15, 12, 11, 14, 15, 13, 12, 14, 13, 11, 15, 13, 12, 14, 13, 12, 11, 13],
-        ZALO: [5, 6, 7, 5, 8, 6, 5, 7, 8, 5, 4, 6, 7, 5, 5, 6, 7, 6, 5, 7, 6, 5, 7, 6, 5, 6, 7, 5, 6, 6],
-    },
-    '90d': {
-        FACEBOOK: [20, 22, 25, 23, 28, 24, 20, 26, 30, 22, 18, 25, 27, 23, 20, 24, 28, 22, 25, 23, 27, 24, 22, 20, 26, 28, 25, 23, 22, 24, 20, 22, 25, 23, 28, 24, 20, 26, 30, 22, 18, 25, 27, 23, 20, 24, 28, 22, 25, 23, 27, 24, 22, 20, 26, 28, 25, 23, 22, 24, 20, 22, 25, 23, 28, 24, 20, 26, 30, 22, 18, 25, 27, 23, 20, 24, 28, 22, 25, 23, 27, 24, 22, 20, 26, 28, 25, 23, 22, 24],
-        TIKTOK: [10, 12, 14, 11, 15, 13, 12, 14, 16, 11, 10, 13, 15, 12, 11, 14, 15, 13, 12, 14, 13, 11, 15, 13, 12, 14, 13, 12, 11, 13, 10, 12, 14, 11, 15, 13, 12, 14, 16, 11, 10, 13, 15, 12, 11, 14, 15, 13, 12, 14, 13, 11, 15, 13, 12, 14, 13, 12, 11, 13, 10, 12, 14, 11, 15, 13, 12, 14, 16, 11, 10, 13, 15, 12, 11, 14, 15, 13, 12, 14, 13, 11, 15, 13, 12, 14, 13, 12, 11, 13],
-        ZALO: [5, 6, 7, 5, 8, 6, 5, 7, 8, 5, 4, 6, 7, 5, 5, 6, 7, 6, 5, 7, 6, 5, 7, 6, 5, 6, 7, 5, 6, 6, 5, 6, 7, 5, 8, 6, 5, 7, 8, 5, 4, 6, 7, 5, 5, 6, 7, 6, 5, 7, 6, 5, 7, 6, 5, 6, 7, 5, 6, 6, 5, 6, 7, 5, 8, 6, 5, 7, 8, 5, 4, 6, 7, 5, 5, 6, 7, 6, 5, 7, 6, 5, 7, 6, 5, 6, 7, 5, 6, 6],
-    },
-};
+interface APIDaily {
+    date: string;
+    companyId: string;
+    _sum: {
+        totalLead: number | null;
+        budgetActual: string | null;
+    };
+}
+
+interface APIResponse {
+    channels: APIChannel[];
+    campaigns: APICampaign[];
+    daily: APIDaily[];
+}
+
+/* ---- Helpers ---- */
+function numOrZero(v: number | string | null | undefined): number {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === 'string') return parseFloat(v) || 0;
+    return v;
+}
+
+function getDateRange(range: TimeRange, customStart?: string, customEnd?: string): { start: string; end: string } {
+    if (range === 'custom' && customStart && customEnd) {
+        return { start: customStart, end: customEnd };
+    }
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+    switch (range) {
+        case 'this_month': return { start: fmt(new Date(year, month, 1)), end: fmt(new Date(year, month + 1, 0)) };
+        case 'last_month': return { start: fmt(new Date(year, month - 1, 1)), end: fmt(new Date(year, month, 0)) };
+        case '3m': return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
+        default: return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
+    }
+}
 
 /* SVG Mini Bar Chart */
 function MiniBarChart({ data, color, height = 60, width = 200 }: { data: number[]; color: string; height?: number; width?: number }) {
@@ -90,20 +102,21 @@ function MiniBarChart({ data, color, height = 60, width = 200 }: { data: number[
 /* Horizontal Bar (for spend distribution) */
 function SpendBar({ data }: { data: ChannelMetrics[] }) {
     const total = data.reduce((s, d) => s + d.spend, 0);
+    if (total === 0) return null;
     return (
         <div style={{ display: 'flex', height: 28, borderRadius: 8, overflow: 'hidden', marginBottom: '0.75rem' }}>
-            {data.map(d => (
+            {data.filter(d => d.spend > 0).map(d => (
                 <div
                     key={d.channel}
                     style={{
                         width: `${(d.spend / total) * 100}%`,
-                        background: CHANNEL_COLORS[d.channel],
+                        background: CHANNEL_COLORS[d.channel] || '#6B7280',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 'var(--font-sm)', fontWeight: 600, color: 'white',
                         minWidth: 40,
                         transition: 'width 0.3s',
                     }}
-                    title={`${CHANNEL_LABELS[d.channel]}: ${formatVND(d.spend)} (${Math.round((d.spend / total) * 100)}%)`}
+                    title={`${CHANNEL_LABELS[d.channel] || d.channel}: ${formatVND(d.spend)} (${Math.round((d.spend / total) * 100)}%)`}
                 >
                     {Math.round((d.spend / total) * 100)}%
                 </div>
@@ -115,6 +128,7 @@ function SpendBar({ data }: { data: ChannelMetrics[] }) {
 /* SVG Donut Chart */
 function DonutChart({ data, metric, label }: { data: ChannelMetrics[]; metric: keyof ChannelMetrics; label: string }) {
     const total = data.reduce((s, d) => s + (d[metric] as number), 0);
+    if (total === 0) return <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Không có dữ liệu</div>;
     let cumulative = 0;
     const r = 40;
     const cx = 55;
@@ -124,7 +138,7 @@ function DonutChart({ data, metric, label }: { data: ChannelMetrics[]; metric: k
     return (
         <div style={{ textAlign: 'center' }}>
             <svg viewBox="0 0 110 110" width={110} height={110}>
-                {data.map(d => {
+                {data.filter(d => (d[metric] as number) > 0).map(d => {
                     const value = d[metric] as number;
                     const pct = total > 0 ? value / total : 0;
                     const dashLength = pct * circumference;
@@ -135,7 +149,7 @@ function DonutChart({ data, metric, label }: { data: ChannelMetrics[]; metric: k
                             key={d.channel}
                             cx={cx} cy={cy} r={r}
                             fill="none"
-                            stroke={CHANNEL_COLORS[d.channel]}
+                            stroke={CHANNEL_COLORS[d.channel] || '#6B7280'}
                             strokeWidth={14}
                             strokeDasharray={`${dashLength} ${circumference - dashLength}`}
                             strokeDashoffset={dashOffset}
@@ -146,11 +160,11 @@ function DonutChart({ data, metric, label }: { data: ChannelMetrics[]; metric: k
                 <text x={cx} y={cy - 4} textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--text)">{total.toLocaleString('vi-VN')}</text>
                 <text x={cx} y={cy + 12} textAnchor="middle" fontSize="8" fill="var(--text-muted)">{label}</text>
             </svg>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.5rem', fontSize: 'var(--font-sm)' }}>
-                {data.map(d => (
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.5rem', fontSize: 'var(--font-sm)', flexWrap: 'wrap' }}>
+                {data.filter(d => (d[metric] as number) > 0).map(d => (
                     <span key={d.channel} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 2, background: CHANNEL_COLORS[d.channel], display: 'inline-block' }} />
-                        {Math.round(((d[metric] as number) / total) * 100)}%
+                        <span style={{ width: 8, height: 8, borderRadius: 2, background: CHANNEL_COLORS[d.channel] || '#6B7280', display: 'inline-block' }} />
+                        {CHANNEL_LABELS[d.channel] || d.channel} {Math.round(((d[metric] as number) / total) * 100)}%
                     </span>
                 ))}
             </div>
@@ -163,13 +177,77 @@ export default function ComparisonPage() {
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
 
-    // Map to mock range
-    const mockRange: MockTimeRange = timeRange === 'this_month' ? '30d' : timeRange === 'last_month' ? '30d' : timeRange === '3m' ? '90d' : '30d';
-    const data = DATA[mockRange];
+    const { start, end } = getDateRange(timeRange, customStart, customEnd);
+
+    // Real data from API
+    const [apiData, setApiData] = useState<APIResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setLoading(true);
+        fetch(`/api/marketing?start=${start}&end=${end}`)
+            .then(r => r.ok ? r.json() : null)
+            .then((data: APIResponse | null) => {
+                if (data) setApiData(data);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [start, end]);
+
+    // Build channel metrics from real API data
+    const data = useMemo<ChannelMetrics[]>(() => {
+        if (!apiData?.channels) return [];
+
+        // Aggregate by channel (across all companies)
+        const byChannel = new Map<string, { leads: number; spend: number; quality: number }>();
+        for (const ch of apiData.channels) {
+            const key = ch.channel;
+            const existing = byChannel.get(key) || { leads: 0, spend: 0, quality: 0 };
+            existing.leads += numOrZero(ch._sum.totalLead);
+            existing.spend += numOrZero(ch._sum.budgetActual);
+            existing.quality += numOrZero(ch._sum.quality);
+            byChannel.set(key, existing);
+        }
+
+        // Count unique campaigns per channel
+        const campaignsByChannel = new Map<string, Set<string>>();
+        if (apiData.campaigns) {
+            for (const c of apiData.campaigns) {
+                const set = campaignsByChannel.get(c.channel) || new Set();
+                set.add(c.campaignName);
+                campaignsByChannel.set(c.channel, set);
+            }
+        }
+
+        return Array.from(byChannel.entries())
+            .map(([channel, v]) => ({
+                channel,
+                leads: v.leads,
+                spend: v.spend,
+                cpl: v.leads > 0 ? v.spend / v.leads : 0,
+                quality: v.quality,
+                campaigns: campaignsByChannel.get(channel)?.size || 0,
+            }))
+            .sort((a, b) => b.leads - a.leads);
+    }, [apiData]);
+
+    // Daily leads by channel for sparklines
+    const dailyByChannel = useMemo<Record<string, number[]>>(() => {
+        if (!apiData?.daily) return {};
+        const result: Record<string, Map<string, number>> = {};
+
+        for (const d of apiData.daily) {
+            // We don't have per-channel daily data from the current API (it groups by date+companyId)
+            // So we skip sparklines for now — they need a new groupBy
+        }
+
+        return {};
+    }, [apiData]);
+
     const totalSpend = data.reduce((s, d) => s + d.spend, 0);
     const totalLeads = data.reduce((s, d) => s + d.leads, 0);
     const avgCPL = totalLeads > 0 ? totalSpend / totalLeads : 0;
-    const bestChannel = [...data].sort((a, b) => a.cpl - b.cpl)[0];
+    const bestChannel = data.length > 0 ? [...data].sort((a, b) => (a.cpl > 0 ? a.cpl : Infinity) - (b.cpl > 0 ? b.cpl : Infinity))[0] : null;
 
     return (
         <>
@@ -194,19 +272,25 @@ export default function ComparisonPage() {
                 <div className="kpi-card">
                     <h3>Tổng Leads</h3>
                     <div className="value">{totalLeads.toLocaleString('vi-VN')}</div>
-                    <div className="trend trend-up">Tốt nhất: {CHANNEL_LABELS[bestChannel.channel]}</div>
+                    {bestChannel && <div className="trend trend-up">CPL thấp nhất: {CHANNEL_LABELS[bestChannel.channel] || bestChannel.channel}</div>}
                 </div>
                 <div className="kpi-card">
                     <h3>CPL trung bình</h3>
-                    <div className="value">{formatVND(avgCPL)}</div>
-                    <div className="trend" style={{ color: avgCPL < 200_000 ? 'var(--success)' : 'var(--warning)' }}>
-                        {avgCPL < 200_000 ? <><IconCheck size={14} /> Dưới target</> : <><IconAlertTriangle size={14} /> Trên target</>}
-                    </div>
+                    <div className="value">{avgCPL > 0 ? formatVND(avgCPL) : '—'}</div>
+                    {avgCPL > 0 && (
+                        <div className="trend" style={{ color: avgCPL < 200_000 ? 'var(--success)' : 'var(--warning)' }}>
+                            {avgCPL < 200_000 ? <><IconCheck size={14} /> Dưới target</> : <><IconAlertTriangle size={14} /> Trên target</>}
+                        </div>
+                    )}
                 </div>
                 <div className="kpi-card">
-                    <h3>Best ROAS</h3>
-                    <div className="value">{Math.max(...data.map(d => d.roas)).toFixed(1)}x</div>
-                    <div className="trend trend-up">{CHANNEL_LABELS[[...data].sort((a, b) => b.roas - a.roas)[0].channel]}</div>
+                    <h3>Tổng chất lượng</h3>
+                    <div className="value">{data.reduce((s, d) => s + d.quality, 0).toLocaleString('vi-VN')}</div>
+                    {totalLeads > 0 && (
+                        <div className="trend" style={{ color: 'var(--text-muted)' }}>
+                            {(data.reduce((s, d) => s + d.quality, 0) / totalLeads * 100).toFixed(1)}% tỷ lệ
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -217,30 +301,12 @@ export default function ComparisonPage() {
                     <DonutChart data={data} metric="leads" label="Leads" />
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Conversions</h3>
-                    <DonutChart data={data} metric="conversions" label="Conversions" />
+                    <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Chất lượng</h3>
+                    <DonutChart data={data} metric="quality" label="Quality" />
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
                     <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Chi tiêu</h3>
                     <DonutChart data={data} metric="spend" label="VND" />
-                </div>
-            </div>
-
-            {/* Sparkline Trends */}
-            <div style={{ marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 600, marginBottom: '1rem' }}><IconTrendUp size={18} /> Xu hướng Leads theo ngày</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-                    {data.map(d => (
-                        <div className="card" key={d.channel}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600 }}>
-                                    <span style={{ color: CHANNEL_COLORS[d.channel] }}>●</span> {CHANNEL_LABELS[d.channel]}
-                                </h3>
-                                <span style={{ fontSize: 'var(--font-base)', fontWeight: 600 }}>{d.leads} leads</span>
-                            </div>
-                            <MiniBarChart data={DAILY_LEADS[mockRange][d.channel]} color={CHANNEL_COLORS[d.channel]} width={300} height={50} />
-                        </div>
-                    ))}
                 </div>
             </div>
 
@@ -255,47 +321,40 @@ export default function ComparisonPage() {
                                 <th style={{ textAlign: 'right' }}>CHI TIÊU</th>
                                 <th style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>LEADS</th>
                                 <th style={{ textAlign: 'right' }}>CPL</th>
-                                <th style={{ textAlign: 'right' }}>IMPRESSIONS</th>
-                                <th style={{ textAlign: 'right' }}>CLICKS</th>
-                                <th style={{ textAlign: 'center' }}>CTR</th>
-                                <th style={{ textAlign: 'center' }}>CONV.</th>
-                                <th style={{ textAlign: 'center' }}>ROAS</th>
-                                <th style={{ textAlign: 'center' }}>CAMPAIGNS</th>
+                                <th style={{ textAlign: 'center' }}>CHẤT LƯỢNG</th>
+                                <th style={{ textAlign: 'center' }}>TỶ LỆ CL</th>
+                                <th style={{ textAlign: 'center' }}>CHIẾN DỊCH</th>
                             </tr>
                         </thead>
                         <tbody>
                             {data.map(d => (
                                 <tr key={d.channel}>
-                                    <td style={{ fontWeight: 500 }}><span style={{ color: CHANNEL_COLORS[d.channel] }}>●</span> {CHANNEL_LABELS[d.channel]}</td>
-                                    <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{formatVND(d.spend)}</td>
+                                    <td style={{ fontWeight: 500 }}><span style={{ color: CHANNEL_COLORS[d.channel] || '#6B7280' }}>●</span> {CHANNEL_LABELS[d.channel] || d.channel}</td>
+                                    <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{d.spend > 0 ? formatVND(d.spend) : '—'}</td>
                                     <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{d.leads.toLocaleString('vi-VN')}</td>
                                     <td style={{ textAlign: 'right' }}>
-                                        <span style={{ color: d.cpl < 200_000 ? 'var(--success)' : d.cpl < 230_000 ? 'var(--warning)' : 'var(--danger)' }}>
-                                            {formatVND(d.cpl)}
+                                        <span style={{ color: d.cpl > 0 ? (d.cpl < 200_000 ? 'var(--success)' : d.cpl < 300_000 ? 'var(--warning)' : 'var(--danger)') : 'var(--text-muted)' }}>
+                                            {d.cpl > 0 ? formatVND(d.cpl) : '—'}
                                         </span>
                                     </td>
-                                    <td style={{ textAlign: 'right' }}>{d.impressions.toLocaleString('vi-VN')}</td>
-                                    <td style={{ textAlign: 'right' }}>{d.clicks.toLocaleString('vi-VN')}</td>
-                                    <td style={{ textAlign: 'center' }}>{d.ctr}%</td>
-                                    <td style={{ textAlign: 'center' }}>{d.conversions}</td>
-                                    <td style={{ textAlign: 'center', fontWeight: 600, color: d.roas >= 3 ? 'var(--success)' : d.roas >= 2.5 ? 'var(--warning)' : 'var(--danger)' }}>
-                                        {d.roas}x
+                                    <td style={{ textAlign: 'center' }}>{d.quality.toLocaleString('vi-VN')}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        {d.leads > 0 ? `${(d.quality / d.leads * 100).toFixed(1)}%` : '—'}
                                     </td>
                                     <td style={{ textAlign: 'center' }}>{d.campaigns}</td>
                                 </tr>
                             ))}
-                            <tr style={{ fontWeight: 600, borderTop: '2px solid var(--border)', background: 'var(--bg-hover, rgba(0,0,0,0.02))' }}>
-                                <td>Tổng</td>
-                                <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{formatVND(totalSpend)}</td>
-                                <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{totalLeads.toLocaleString('vi-VN')}</td>
-                                <td style={{ textAlign: 'right' }}>{formatVND(avgCPL)}</td>
-                                <td style={{ textAlign: 'right' }}>{data.reduce((s, d) => s + d.impressions, 0).toLocaleString('vi-VN')}</td>
-                                <td style={{ textAlign: 'right' }}>{data.reduce((s, d) => s + d.clicks, 0).toLocaleString('vi-VN')}</td>
-                                <td style={{ textAlign: 'center' }}>{(data.reduce((s, d) => s + d.clicks, 0) / data.reduce((s, d) => s + d.impressions, 0) * 100).toFixed(1)}%</td>
-                                <td style={{ textAlign: 'center' }}>{data.reduce((s, d) => s + d.conversions, 0)}</td>
-                                <td style={{ textAlign: 'center' }}>—</td>
-                                <td style={{ textAlign: 'center' }}>{data.reduce((s, d) => s + d.campaigns, 0)}</td>
-                            </tr>
+                            {data.length > 1 && (
+                                <tr style={{ fontWeight: 600, borderTop: '2px solid var(--border)', background: 'var(--bg-hover, rgba(0,0,0,0.02))' }}>
+                                    <td>Tổng</td>
+                                    <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{formatVND(totalSpend)}</td>
+                                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{totalLeads.toLocaleString('vi-VN')}</td>
+                                    <td style={{ textAlign: 'right' }}>{avgCPL > 0 ? formatVND(avgCPL) : '—'}</td>
+                                    <td style={{ textAlign: 'center' }}>{data.reduce((s, d) => s + d.quality, 0).toLocaleString('vi-VN')}</td>
+                                    <td style={{ textAlign: 'center' }}>{totalLeads > 0 ? `${(data.reduce((s, d) => s + d.quality, 0) / totalLeads * 100).toFixed(1)}%` : '—'}</td>
+                                    <td style={{ textAlign: 'center' }}>{data.reduce((s, d) => s + d.campaigns, 0)}</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
