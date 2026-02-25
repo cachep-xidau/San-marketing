@@ -139,7 +139,7 @@ function getMonthRange(range: TimeRange, customStart?: string, customEnd?: strin
     }
 
     // Reference date: Feb 2026 (latest data)
-    const now = new Date('2026-02-25');
+    const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth(); // 0-indexed
 

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+const VALID_COMPANIES = ['san', 'teennie', 'tgil'];
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -9,6 +10,24 @@ export async function GET(request: Request) {
     const channel = searchParams.get('channel');
     const startDate = searchParams.get('start');
     const endDate = searchParams.get('end');
+
+    // Validate companyId
+    if (companyId && !VALID_COMPANIES.includes(companyId)) {
+        return NextResponse.json({ error: 'Invalid companyId' }, { status: 400 });
+    }
+
+    // Validate date format
+    if (startDate && !DATE_RE.test(startDate)) {
+        return NextResponse.json({ error: 'Invalid start date format' }, { status: 400 });
+    }
+    if (endDate && !DATE_RE.test(endDate)) {
+        return NextResponse.json({ error: 'Invalid end date format' }, { status: 400 });
+    }
+    if (startDate && endDate && startDate > endDate) {
+        return NextResponse.json({ error: 'start must be ≤ end' }, { status: 400 });
+    }
+
+    const limit = Math.min(Number(searchParams.get('limit')) || 500, 2000);
 
     const where: Record<string, unknown> = {};
 
@@ -25,7 +44,7 @@ export async function GET(request: Request) {
         const entries = await prisma.marketingEntry.findMany({
             where,
             orderBy: { date: 'desc' },
-            take: 500,
+            take: limit,
         });
 
         // Transform to LeadEntry format for Staff page

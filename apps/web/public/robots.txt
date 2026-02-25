@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /api/
+Disallow: /cmo/
+Disallow: /staff/
+Disallow: /manager/
+Disallow: /settings/

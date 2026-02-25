@@ -38,6 +38,10 @@ export default function TimeFilterBar({
     };
 
     const handleDateChange = (start: string, end: string) => {
+        // Auto-swap if start > end
+        if (start && end && start > end) {
+            [start, end] = [end, start];
+        }
         setLocalStart(start);
         setLocalEnd(end);
         if (start && end) {

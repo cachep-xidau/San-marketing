@@ -63,7 +63,7 @@ export default function StaffDashboard() {
         if (timeRange === 'custom' && customStart && customEnd) {
             return { start: customStart, end: customEnd };
         }
-        const now = new Date('2026-02-25');
+        const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth();
         const fmt = (d: Date) => d.toISOString().split('T')[0];

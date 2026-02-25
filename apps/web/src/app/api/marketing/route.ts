@@ -1,13 +1,32 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+const VALID_COMPANIES = ['san', 'teennie', 'tgil'];
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('companyId') || undefined;
     const startDate = searchParams.get('start');
     const endDate = searchParams.get('end');
+
+    // Validate companyId
+    if (companyId && !VALID_COMPANIES.includes(companyId)) {
+        return NextResponse.json({ error: 'Invalid companyId' }, { status: 400 });
+    }
+
+    // Validate date format
+    if (startDate && !DATE_RE.test(startDate)) {
+        return NextResponse.json({ error: 'Invalid start date format (YYYY-MM-DD)' }, { status: 400 });
+    }
+    if (endDate && !DATE_RE.test(endDate)) {
+        return NextResponse.json({ error: 'Invalid end date format (YYYY-MM-DD)' }, { status: 400 });
+    }
+
+    // Validate start ≤ end
+    if (startDate && endDate && startDate > endDate) {
+        return NextResponse.json({ error: 'start must be ≤ end' }, { status: 400 });
+    }
 
     const where: Record<string, unknown> = {};
 
