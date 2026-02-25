@@ -384,9 +384,9 @@ export default function StaffDashboard() {
                 <table className="table" style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                     <thead>
                         <tr style={{ background: 'var(--bg-card)' }}>
-                            <th style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1 }}>NGÀY</th>
-                            <th>KÊNH</th>
-                            <th>CHIẾN DỊCH</th>
+                            <th style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 3, minWidth: 80 }}>NGÀY</th>
+                            <th style={{ position: 'sticky', left: 80, background: 'var(--bg-card)', zIndex: 3, minWidth: 90 }}>KÊNH</th>
+                            <th style={{ position: 'sticky', left: 170, background: 'var(--bg-card)', zIndex: 3, minWidth: 180, borderRight: '2px solid var(--border)' }}>CHIẾN DỊCH</th>
                             <th style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>TỔNG</th>
                             <th style={{ textAlign: 'center' }}>SPAM</th>
                             <th style={{ textAlign: 'center' }}>TIỀM NĂNG</th>
@@ -404,9 +404,9 @@ export default function StaffDashboard() {
                         {/* Data rows */}
                         {filteredEntries.map(entry => (
                             <tr key={entry.id} onClick={() => handleEditEntry(entry)} style={{ cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover, rgba(0,0,0,0.03))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
-                                <td style={{ position: 'sticky', left: 0, background: 'inherit', zIndex: 1, fontWeight: 500, color: 'var(--text-muted)', fontSize: '0.75rem' }}>{entry.date}</td>
-                                <td><span style={{ color: channelColor(entry.channel) }}>●</span> {channelLabel(entry.channel)}</td>
-                                <td style={{ fontWeight: 500, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.campaignName}</td>
+                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2, fontWeight: 500, color: 'var(--text-muted)', fontSize: '0.75rem', minWidth: 80 }}>{entry.date}</td>
+                                <td style={{ position: 'sticky', left: 80, background: 'var(--bg-card)', zIndex: 2, minWidth: 90 }}><span style={{ color: channelColor(entry.channel) }}>●</span> {channelLabel(entry.channel)}</td>
+                                <td style={{ position: 'sticky', left: 170, background: 'var(--bg-card)', zIndex: 2, fontWeight: 500, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 180, borderRight: '2px solid var(--border)' }}>{entry.campaignName}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{entry.total}</td>
                                 <td style={{ textAlign: 'center', color: entry.spam > 0 ? '#EF4444' : 'var(--text-muted)' }}>{entry.spam}</td>
                                 <td style={{ textAlign: 'center' }}>{entry.potential}</td>
@@ -424,9 +424,9 @@ export default function StaffDashboard() {
                         {/* Totals row */}
                         {filteredEntries.length > 0 && (
                             <tr style={{ fontWeight: 700, borderTop: '2px solid var(--border)', background: 'var(--bg-card)' }}>
-                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1 }}>TỔNG</td>
-                                <td></td>
-                                <td></td>
+                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2, minWidth: 80 }}>TỔNG</td>
+                                <td style={{ position: 'sticky', left: 80, background: 'var(--bg-card)', zIndex: 2, minWidth: 90 }}></td>
+                                <td style={{ position: 'sticky', left: 170, background: 'var(--bg-card)', zIndex: 2, minWidth: 180, borderRight: '2px solid var(--border)' }}></td>
                                 <td style={{ textAlign: 'center', color: 'var(--primary)' }}>{totals.total}</td>
                                 <td style={{ textAlign: 'center', color: '#EF4444' }}>{totals.spam}</td>
                                 <td style={{ textAlign: 'center' }}>{totals.potential}</td>

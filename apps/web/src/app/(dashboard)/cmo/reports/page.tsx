@@ -442,9 +442,9 @@ export default function ReportPage() {
                 <table className="table" style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                     <thead>
                         <tr style={{ background: 'var(--bg-card)' }}>
-                            <th style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1, minWidth: 35 }}>#</th>
-                            <th style={{ minWidth: 90 }}>KÊNH</th>
-                            <th style={{ minWidth: 180 }}>CHIẾN DỊCH</th>
+                            <th style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 3, minWidth: 35 }}>#</th>
+                            <th style={{ position: 'sticky', left: 35, background: 'var(--bg-card)', zIndex: 3, minWidth: 90 }}>KÊNH</th>
+                            <th style={{ position: 'sticky', left: 125, background: 'var(--bg-card)', zIndex: 3, minWidth: 180, borderRight: '2px solid var(--border)' }}>CHIẾN DỊCH</th>
                             <th style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>TỔNG LEAD</th>
                             <th style={{ textAlign: 'center', color: '#EF4444' }}>SPAM</th>
                             <th style={{ textAlign: 'center' }}>TIỀM NĂNG</th>
@@ -459,12 +459,12 @@ export default function ReportPage() {
                     <tbody>
                         {currentRows.map((row, idx) => (
                             <tr key={row.id + idx}>
-                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1, color: 'var(--text-muted)', fontSize: '0.7rem' }}>{idx + 1}</td>
-                                <td>
+                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2, color: 'var(--text-muted)', fontSize: '0.7rem', minWidth: 35 }}>{idx + 1}</td>
+                                <td style={{ position: 'sticky', left: 35, background: 'var(--bg-card)', zIndex: 2, minWidth: 90 }}>
                                     <span style={{ color: CHANNEL_COLORS[row.channel] || '#6B7280' }}>●</span>{' '}
                                     {CHANNEL_LABELS[row.channel] || row.channel}
                                 </td>
-                                <td style={{ fontWeight: 500, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.campaignName}</td>
+                                <td style={{ position: 'sticky', left: 125, background: 'var(--bg-card)', zIndex: 2, fontWeight: 500, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 180, borderRight: '2px solid var(--border)' }}>{row.campaignName}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{row.totalLead.toLocaleString('vi-VN')}</td>
                                 <td style={{ textAlign: 'center', color: row.spam > 0 ? '#EF4444' : 'var(--text-muted)' }}>{row.spam.toLocaleString('vi-VN')}</td>
                                 <td style={{ textAlign: 'center' }}>{row.potential.toLocaleString('vi-VN')}</td>
@@ -480,9 +480,9 @@ export default function ReportPage() {
                         {/* Totals */}
                         {currentRows.length > 0 && (
                             <tr style={{ fontWeight: 700, borderTop: '2px solid var(--border)', background: activeColor + '08' }}>
-                                <td style={{ position: 'sticky', left: 0, background: activeColor + '08', zIndex: 1 }}></td>
-                                <td></td>
-                                <td style={{ fontWeight: 700 }}>TỔNG {activeLabel}</td>
+                                <td style={{ position: 'sticky', left: 0, background: activeColor + '08', zIndex: 2, minWidth: 35 }}></td>
+                                <td style={{ position: 'sticky', left: 35, background: activeColor + '08', zIndex: 2, minWidth: 90 }}></td>
+                                <td style={{ position: 'sticky', left: 125, background: activeColor + '08', zIndex: 2, fontWeight: 700, minWidth: 180, borderRight: '2px solid var(--border)' }}>TỔNG {activeLabel}</td>
                                 <td style={{ textAlign: 'center', color: 'var(--primary)' }}>{totals.totalLead.toLocaleString('vi-VN')}</td>
                                 <td style={{ textAlign: 'center', color: '#EF4444' }}>{totals.spam.toLocaleString('vi-VN')}</td>
                                 <td style={{ textAlign: 'center' }}>{totals.potential.toLocaleString('vi-VN')}</td>
