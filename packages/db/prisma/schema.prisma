@@ -1,0 +1,275 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// === ENUMS ===
+
+enum Role {
+  CMO
+  HEAD
+  MANAGER
+  STAFF
+}
+
+enum Channel {
+  FACEBOOK
+  TIKTOK
+  ZALO
+  CRM
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum PaceStatus {
+  ON_TRACK
+  BEHIND
+  AHEAD
+  OVERSPENT
+}
+
+enum AlertType {
+  BUDGET_BURN
+  PERFORMANCE_DROP
+  GOAL_GAP
+  DAILY_DIGEST
+  WEEKLY_REPORT
+  ANOMALY
+}
+
+enum NotificationChannel {
+  TELEGRAM
+  EMAIL
+}
+
+enum FunnelStage {
+  AWARENESS
+  INTEREST
+  LEAD
+  QUALIFIED
+  CONVERSION
+  RETENTION
+}
+
+// === MODELS ===
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  password       String
+  role           Role
+  telegramChatId String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  notificationPrefs NotificationPreference[]
+  dashboardConfigs  DashboardConfig[]
+  alertLogs         AlertLog[]              @relation("AcknowledgedAlerts")
+}
+
+model NotificationPreference {
+  id        String              @id @default(cuid())
+  userId    String
+  alertType AlertType
+  channel   NotificationChannel
+  enabled   Boolean             @default(true)
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, alertType, channel])
+}
+
+model DashboardConfig {
+  id           String  @id @default(cuid())
+  userId       String
+  viewName     String
+  widgetLayout Json
+  isDefault    Boolean @default(false)
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdAccount {
+  id        String    @id @default(cuid())
+  name      String
+  channel   Channel
+  accountId String
+  active    Boolean   @default(true)
+  lastSync  DateTime?
+  createdAt DateTime  @default(now())
+
+  campaigns Campaign[]
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  channel     Channel
+  status      CampaignStatus @default(DRAFT)
+  startDate   DateTime
+  endDate     DateTime?
+  adAccountId String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  adAccount  AdAccount      @relation(fields: [adAccountId], references: [id])
+  budget     Budget?
+  goal       Goal?
+  adSets     AdSet[]
+  leads      Lead[]
+  alertRules AlertRule[]
+  notes      CampaignNote[]
+}
+
+model Budget {
+  id           String     @id @default(cuid())
+  campaignId   String     @unique
+  planned      Decimal    @db.Decimal(15, 2)
+  actualSpend  Decimal    @default(0) @db.Decimal(15, 2)
+  dailyLimit   Decimal?   @db.Decimal(15, 2)
+  paceStatus   PaceStatus @default(ON_TRACK)
+  forecastDate DateTime?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model Goal {
+  id                String   @id @default(cuid())
+  campaignId        String   @unique
+  targetLeads       Int?
+  targetConversions Int?
+  targetCPL         Decimal? @db.Decimal(15, 2)
+  targetROAS        Decimal? @db.Decimal(5, 2)
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model AdSet {
+  id         String @id @default(cuid())
+  name       String
+  externalId String?
+  campaignId String
+  status     String @default("ACTIVE")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ads      Ad[]
+}
+
+model Ad {
+  id         String  @id @default(cuid())
+  name       String
+  externalId String?
+  adSetId    String
+  status     String  @default("ACTIVE")
+  creative   Json?
+
+  adSet   AdSet          @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  metrics DailyMetrics[]
+}
+
+model DailyMetrics {
+  id          String   @id @default(cuid())
+  adId        String
+  date        DateTime @db.Date
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  spend       Decimal  @default(0) @db.Decimal(15, 2)
+  leads       Int      @default(0)
+  conversions Int      @default(0)
+  ctr         Decimal? @db.Decimal(5, 4)
+  cpc         Decimal? @db.Decimal(15, 2)
+  cpm         Decimal? @db.Decimal(15, 2)
+  cpl         Decimal? @db.Decimal(15, 2)
+  rawData     Json?
+
+  ad Ad @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@unique([adId, date])
+  @@index([date])
+}
+
+model Lead {
+  id            String      @id @default(cuid())
+  campaignId    String
+  sourceChannel Channel
+  externalId    String?
+  name          String?
+  phone         String?
+  email         String?
+  stage         FunnelStage @default(LEAD)
+  value         Decimal?    @db.Decimal(15, 2)
+  createdAt     DateTime    @default(now())
+  convertedAt   DateTime?
+  metadata      Json?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([sourceChannel])
+  @@index([stage])
+  @@index([createdAt])
+}
+
+model AlertRule {
+  id            String              @id @default(cuid())
+  campaignId    String?
+  type          AlertType
+  threshold     Json
+  channel       NotificationChannel
+  recipientRole Role?
+  active        Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+
+  campaign Campaign?  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  logs     AlertLog[]
+}
+
+model AlertLog {
+  id             String              @id @default(cuid())
+  alertRuleId    String
+  triggeredAt    DateTime            @default(now())
+  message        String
+  channelSent    NotificationChannel
+  acknowledgedBy String?
+  decisionAction String?
+
+  alertRule    AlertRule @relation(fields: [alertRuleId], references: [id], onDelete: Cascade)
+  acknowledger User?    @relation("AcknowledgedAlerts", fields: [acknowledgedBy], references: [id])
+}
+
+model CampaignNote {
+  id         String   @id @default(cuid())
+  campaignId String
+  userId     String
+  content    String
+  createdAt  DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model ChannelFunnelMapping {
+  id          String      @id @default(cuid())
+  channel     Channel
+  eventName   String
+  funnelStage FunnelStage
+
+  @@unique([channel, eventName])
+}
+
+model SyncLog {
+  id               String   @id @default(cuid())
+  channel          Channel
+  status           String
+  recordsProcessed Int      @default(0)
+  errors           Json?
+  startedAt        DateTime @default(now())
+  completedAt      DateTime?
+}
