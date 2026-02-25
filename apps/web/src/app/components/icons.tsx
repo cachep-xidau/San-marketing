@@ -201,3 +201,12 @@ export const IconBox = multiIcon([
 export const IconGrid = multiIcon([
     'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',
 ]);
+
+// Google Ads triangle
+export const IconGoogleAds = ({ size = 20, className }: { size?: number; className?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}
+        style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
+        <path d="M12 3L3 19h18L12 3z" stroke="#FBBC04" strokeWidth={1.75} strokeLinejoin="round" fill="none" />
+        <circle cx="12" cy="14.5" r="2" fill="#4285F4" />
+    </svg>
+);

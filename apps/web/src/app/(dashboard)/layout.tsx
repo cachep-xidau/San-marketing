@@ -4,7 +4,7 @@ import { useEffect, useState, createContext, useContext, type ReactNode } from '
 import { useRouter, usePathname } from 'next/navigation';
 import { fetchSession, logout, type SessionUser } from '@/lib/auth';
 import { ROLE_LABELS, COMPANIES, type Company } from '@marketing-hub/shared';
-import { IconHome, IconCampaign, IconUpload, IconComparison, IconReport, IconSettingsGear, IconLogout, IconBell, IconChart } from '@/app/components/icons';
+import { IconHome, IconCampaign, IconUpload, IconComparison, IconReport, IconSettingsGear, IconLogout, IconBell, IconChart, IconGoogleAds } from '@/app/components/icons';
 
 /* ---- Company Context ---- */
 interface CompanyCtx {
@@ -26,6 +26,7 @@ const NAV_ITEMS: { href: string; label: string; icon: ReactNode; roles: string[]
     { href: '/manager', label: 'Chiến dịch', icon: <IconCampaign size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
     { href: '/staff', label: 'Nhập liệu', icon: <IconUpload size={18} />, roles: ['CMO', 'HEAD', 'MANAGER', 'STAFF'] },
     { href: '/cmo/comparison', label: 'So sánh kênh', icon: <IconComparison size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
+    { href: '/google-ads', label: 'Google Ads', icon: <IconGoogleAds size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
     { href: '/cmo/reports', label: 'Báo cáo', icon: <IconReport size={18} />, roles: ['CMO', 'HEAD'] },
     { href: '/cmo/alerts', label: 'Cảnh báo', icon: <IconBell size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
     { href: '/settings', label: 'Cài đặt', icon: <IconSettingsGear size={18} />, roles: ['CMO', 'HEAD', 'MANAGER', 'STAFF'] },
