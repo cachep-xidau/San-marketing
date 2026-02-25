@@ -58,7 +58,7 @@ export default function StaffDashboard() {
     const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
-    const [companySummary, setCompanySummary] = useState<Record<string, { campaigns: number; leads: number }>>({}); 
+    const [companySummary, setCompanySummary] = useState<Record<string, { campaigns: number; leads: number }>>({});
 
     // Compute date range from timeRange
     const dateRange = useMemo(() => {
@@ -97,7 +97,7 @@ export default function StaffDashboard() {
                 map[s.companyId] = { campaigns: data.campaigns?.filter((c: { companyId: string }) => c.companyId === s.companyId).length || 0, leads: s._sum?.totalLead || 0 };
             }
             setCompanySummary(map);
-        }).catch(() => {});
+        }).catch(() => { });
     }, [dateRange.start, dateRange.end]);
     const [showAddRow, setShowAddRow] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -288,13 +288,10 @@ export default function StaffDashboard() {
         if (fileInputRef.current) fileInputRef.current.value = '';
     }, [user]);
 
-    const channelLabel = (id: string) => {
-        const ch = channels.find(c => c.id === id);
-        return ch?.label || id;
-    };
+    const channelLabel = (id: string) => id;
 
     const channelColor = (id: string) => {
-        const ch = channels.find(c => c.id === id);
+        const ch = activeCompany?.channels.find(c => c.id === id || c.label === id);
         return ch?.color || '#6B7280';
     };
 
@@ -513,7 +510,7 @@ export default function StaffDashboard() {
                                         <select className="input" value={newRow.channel} onChange={e => setNewRow(p => ({ ...p, channel: e.target.value, campaignId: '' }))}
                                             style={{ width: '100%', fontSize: 'var(--font-md)', padding: '0.5rem 0.75rem' }}>
                                             <option value="">Chọn kênh...</option>
-                                            {channels.map(ch => (
+                                            {(activeCompany?.channels || []).map(ch => (
                                                 <option key={ch.id} value={ch.id}>{ch.label}</option>
                                             ))}
                                         </select>
