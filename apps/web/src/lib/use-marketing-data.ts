@@ -104,11 +104,18 @@ interface APICampaign {
     _count: number;
 }
 
+interface APIMasterStatus {
+    companyId: string;
+    status: string;
+    _count: number;
+}
+
 interface APIResponse {
     summary: APISummary[];
     daily: APIDaily[];
     campaigns: APICampaign[];
     channels: APIChannel[];
+    masterStatus: APIMasterStatus[];
     meta: {
         totalRows: number;
         dateRange: { start: string; end: string };
@@ -191,7 +198,11 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
         const allLeads = data.summary.reduce((s, r) => s + numOrZero(r._sum.totalLead), 0);
         const allSpend = data.summary.reduce((s, r) => s + numOrZero(r._sum.budgetActual), 0);
         const allQuality = data.summary.reduce((s, r) => s + numOrZero(r._sum.quality), 0);
-        const uniqueCampaigns = new Set(data.campaigns.map(c => c.campaignName)).size;
+
+        // Campaign master BẬT/TẮT counts
+        const ms = data.masterStatus || [];
+        const allActive = ms.filter(m => m.status === 'BẬT').reduce((s, m) => s + m._count, 0);
+        const allTotal = ms.reduce((s, m) => s + m._count, 0);
 
         const cards: CompanyCard[] = [
             {
@@ -204,16 +215,15 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
                     conversions: allQuality, spend: allSpend,
                 },
                 delta: { leads: 0, clicks: 0, impressions: 0, conversions: 0, spend: 0 },
-                campaigns: uniqueCampaigns,
-                active: uniqueCampaigns,
+                campaigns: allTotal,
+                active: allActive,
             },
         ];
 
         for (const co of COMPANIES) {
             const row = data.summary.find(s => s.companyId === co.id);
-            const companyCampaigns = new Set(
-                data.campaigns.filter(c => c.companyId === co.id).map(c => c.campaignName),
-            ).size;
+            const coActive = ms.filter(m => m.companyId === co.id && m.status === 'BẬT').reduce((s, m) => s + m._count, 0);
+            const coTotal = ms.filter(m => m.companyId === co.id).reduce((s, m) => s + m._count, 0);
 
             cards.push({
                 id: co.id,
@@ -226,8 +236,8 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
                     spend: numOrZero(row?._sum.budgetActual),
                 },
                 delta: { leads: 0, clicks: 0, impressions: 0, conversions: 0, spend: 0 },
-                campaigns: companyCampaigns,
-                active: companyCampaigns,
+                campaigns: coTotal,
+                active: coActive,
             });
         }
 

@@ -302,3 +302,20 @@ model MarketingEntry {
   @@index([companyId, date])
   @@index([channel])
 }
+
+model CampaignMaster {
+  id          String   @id @default(cuid())
+  companyId   String   // 'san', 'teennie', 'tgil'
+  campaignId  Int      // ID from Master sheet
+  channel     String   // Kênh: Page San, Tiktok, etc.
+  name        String   // Tên chiến dịch
+  status      String   @default("TẮT") // BẬT or TẮT
+  startDate   String?  // Ngày bắt đầu
+  endDate     String?  // Ngày kết thúc
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, campaignId])
+  @@index([companyId])
+  @@index([status])
+}

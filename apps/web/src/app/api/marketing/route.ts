@@ -95,11 +95,18 @@ export async function GET(request: Request) {
             },
         });
 
+        // Campaign master status (BẬT/TẮT)
+        const masterStatus = await prisma.campaignMaster.groupBy({
+            by: ['companyId', 'status'],
+            _count: true,
+        });
+
         return NextResponse.json({
             summary,
             daily,
             campaigns,
             channels,
+            masterStatus,
             meta: {
                 totalRows: daily.length,
                 dateRange: {
