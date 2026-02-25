@@ -58,7 +58,7 @@ export default function TimeFilterBar({
         borderRadius: 'var(--radius-xs, 6px)',
         border: 'none',
         cursor: 'pointer',
-        fontSize: '0.8rem',
+        fontSize: 'var(--font-base)',
         fontWeight: active ? 600 : 450,
         background: active ? 'var(--bg-card)' : 'transparent',
         color: active ? 'var(--text)' : 'var(--text-muted)',
@@ -94,7 +94,7 @@ export default function TimeFilterBar({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                fontSize: '0.8rem',
+                fontSize: 'var(--font-base)',
                 padding: '0.15rem 0.25rem',
                 borderRadius: 'var(--radius-xs, 6px)',
                 background: isCustom ? 'var(--bg-card)' : 'transparent',
@@ -106,7 +106,7 @@ export default function TimeFilterBar({
                     onChange={v => handleDateChange(v, localEnd)}
                     placeholder="Từ ngày"
                 />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>—</span>
+                <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>—</span>
                 <DatePicker
                     value={localEnd}
                     onChange={v => handleDateChange(localStart, v)}

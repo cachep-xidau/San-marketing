@@ -290,11 +290,11 @@ export default function StaffDashboard() {
             <div className="page-header" style={{ marginBottom: '1rem' }}>
                 <div>
                     <h1>Nhập liệu</h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-md)', marginTop: '0.25rem' }}>
                         Nhập số liệu leads hàng ngày
                     </p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setShowAddRow(true)} style={{ fontSize: '0.8rem' }}>
+                <button className="btn btn-primary" onClick={() => setShowAddRow(true)} style={{ fontSize: 'var(--font-base)' }}>
                     <IconPlus size={14} /> Thêm dòng
                 </button>
             </div>
@@ -327,21 +327,21 @@ export default function StaffDashboard() {
                                 <div style={{
                                     width: 24, height: 24, borderRadius: 5, background: co.color,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: 'white', fontWeight: 700, fontSize: '0.65rem',
+                                    color: 'white', fontWeight: 700, fontSize: 'var(--font-xs)',
                                 }}>{co.shortName.charAt(0)}</div>
-                                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{co.shortName}</span>
+                                <span style={{ fontWeight: 600, fontSize: 'var(--font-md)' }}>{co.shortName}</span>
                                 {isActive && <span style={{
-                                    marginLeft: 'auto', fontSize: '0.65rem', background: co.color, color: 'white',
+                                    marginLeft: 'auto', fontSize: 'var(--font-xs)', background: co.color, color: 'white',
                                     padding: '0.1rem 0.4rem', borderRadius: 4, fontWeight: 600,
                                 }}>Đang chọn</span>}
                             </div>
-                            <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem' }}>
+                            <div style={{ display: 'flex', gap: '1rem', fontSize: 'var(--font-sm)' }}>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Chiến dịch</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-xs)' }}>Chiến dịch</div>
                                     <div style={{ fontWeight: 700 }}>{isActive ? new Set(entries.map(e => e.campaignName)).size : '—'}</div>
                                 </div>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Leads</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-xs)' }}>Leads</div>
                                     <div style={{ fontWeight: 700 }}>{isActive ? entries.reduce((s, e) => s + e.total, 0).toLocaleString('vi-VN') : '—'}</div>
                                 </div>
                             </div>
@@ -369,7 +369,7 @@ export default function StaffDashboard() {
 
                 <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 0.15rem' }} />
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'var(--font-md)' }}>
                     <IconFilter size={14} /> Lọc:
                 </div>
                 <select
@@ -384,14 +384,14 @@ export default function StaffDashboard() {
                     ))}
                 </select>
 
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)' }}>
                     {filteredEntries.length} dòng
                 </span>
             </div>
 
             {/* Data Table */}
             <div className="card" style={{ overflow: 'auto', padding: 0 }}>
-                <table className="table" style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                <table className="table" style={{ fontSize: 'var(--font-sm)', whiteSpace: 'nowrap' }}>
                     <thead>
                         <tr style={{ background: 'var(--bg-card)' }}>
                             <th style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 3, minWidth: 80 }}>NGÀY</th>
@@ -414,7 +414,7 @@ export default function StaffDashboard() {
                         {/* Data rows */}
                         {filteredEntries.map(entry => (
                             <tr key={entry.id} onClick={() => handleEditEntry(entry)} style={{ cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover, rgba(0,0,0,0.03))'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
-                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2, fontWeight: 500, color: 'var(--text-muted)', fontSize: '0.75rem', minWidth: 80 }}>{entry.date}</td>
+                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2, fontWeight: 500, color: 'var(--text-muted)', fontSize: 'var(--font-sm)', minWidth: 80 }}>{entry.date}</td>
                                 <td style={{ position: 'sticky', left: 80, background: 'var(--bg-card)', zIndex: 2, minWidth: 90 }}><span style={{ color: channelColor(entry.channel) }}>●</span> {channelLabel(entry.channel)}</td>
                                 <td style={{ position: 'sticky', left: 170, background: 'var(--bg-card)', zIndex: 2, fontWeight: 500, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 180, borderRight: '2px solid var(--border)' }}>{entry.campaignName}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{entry.total}</td>
@@ -425,9 +425,9 @@ export default function StaffDashboard() {
                                 <td style={{ textAlign: 'center' }}>{entry.arrived}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--success)' }}>{entry.closed}</td>
                                 <td style={{ textAlign: 'center' }}>{entry.bills}</td>
-                                <td style={{ textAlign: 'right', fontSize: '0.75rem' }}>{entry.budgetTarget > 0 ? formatVND(entry.budgetTarget) : '—'}</td>
-                                <td style={{ textAlign: 'right', fontSize: '0.75rem' }}>{entry.budgetActual > 0 ? formatVND(entry.budgetActual) : '—'}</td>
-                                <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{entry.updatedBy ? `${entry.updatedBy} ✏️` : entry.enteredBy}</td>
+                                <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{entry.budgetTarget > 0 ? formatVND(entry.budgetTarget) : '—'}</td>
+                                <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{entry.budgetActual > 0 ? formatVND(entry.budgetActual) : '—'}</td>
+                                <td style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>{entry.updatedBy ? `${entry.updatedBy} ✏️` : entry.enteredBy}</td>
                             </tr>
                         ))}
 
@@ -458,7 +458,7 @@ export default function StaffDashboard() {
                 <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                     <IconFile size={36} />
                     <p style={{ marginTop: '0.75rem', fontWeight: 500 }}>Chưa có dữ liệu</p>
-                    <p style={{ fontSize: '0.8rem' }}>Nhấn "Thêm dòng" hoặc "Import CSV" để bắt đầu nhập liệu</p>
+                    <p style={{ fontSize: 'var(--font-base)' }}>Nhấn "Thêm dòng" hoặc "Import CSV" để bắt đầu nhập liệu</p>
                 </div>
             )}
 
@@ -483,11 +483,11 @@ export default function StaffDashboard() {
                                         width: 36, height: 36, borderRadius: 8,
                                         background: activeCompany?.color || '#6B7280',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        color: 'white', fontWeight: 700, fontSize: '0.9rem',
+                                        color: 'white', fontWeight: 700, fontSize: 'var(--font-lg)',
                                     }}>{activeCompany?.shortName.charAt(0) || '?'}</div>
                                     <div>
-                                        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{editingEntry ? 'Chỉnh sửa' : (activeCompany?.name || 'Công ty')}</div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{editingEntry ? editingEntry.campaignName : `Nhập số liệu — ${dateDisplay}`}</div>
+                                        <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{editingEntry ? 'Chỉnh sửa' : (activeCompany?.name || 'Công ty')}</div>
+                                        <div style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)' }}>{editingEntry ? editingEntry.campaignName : `Nhập số liệu — ${dateDisplay}`}</div>
                                     </div>
                                 </div>
                                 <button onClick={resetForm} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><IconClose size={20} /></button>
@@ -499,9 +499,9 @@ export default function StaffDashboard() {
                                 {/* Campaign info: 2-column */}
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
                                     <div>
-                                        <label style={{ fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.3rem', display: 'block' }}>Kênh</label>
+                                        <label style={{ fontSize: 'var(--font-base)', fontWeight: 500, marginBottom: '0.3rem', display: 'block' }}>Kênh</label>
                                         <select className="input" value={newRow.channel} onChange={e => setNewRow(p => ({ ...p, channel: e.target.value, campaignId: '' }))}
-                                            style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
+                                            style={{ width: '100%', fontSize: 'var(--font-md)', padding: '0.5rem 0.75rem' }}>
                                             <option value="">Chọn kênh...</option>
                                             {channels.map(ch => (
                                                 <option key={ch.id} value={ch.id}>{ch.label}</option>
@@ -509,9 +509,9 @@ export default function StaffDashboard() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label style={{ fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.3rem', display: 'block' }}>Chiến dịch</label>
+                                        <label style={{ fontSize: 'var(--font-base)', fontWeight: 500, marginBottom: '0.3rem', display: 'block' }}>Chiến dịch</label>
                                         <select className="input" value={newRow.campaignId} onChange={e => setNewRow(p => ({ ...p, campaignId: e.target.value }))}
-                                            style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
+                                            style={{ width: '100%', fontSize: 'var(--font-md)', padding: '0.5rem 0.75rem' }}>
                                             <option value="">Chọn chiến dịch...</option>
                                             {filteredCampaignsForAdd.map(c => (
                                                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -523,7 +523,7 @@ export default function StaffDashboard() {
                                 <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 1.25rem' }} />
 
                                 {/* Leads: 4-column grid */}
-                                <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.65rem' }}>Số liệu Leads</h3>
+                                <h3 style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.65rem' }}>Số liệu Leads</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem 0.65rem', marginBottom: '1.25rem' }}>
                                     {[
                                         { key: 'potential' as const, label: 'Tiềm năng' },
@@ -536,11 +536,11 @@ export default function StaffDashboard() {
                                         { key: 'spam' as const, label: 'Spam', color: '#EF4444' },
                                     ].map(f => (
                                         <div key={f.key}>
-                                            <label style={{ fontSize: '0.7rem', fontWeight: 500, marginBottom: '0.15rem', display: 'block', color: f.color || 'var(--text)' }}>{f.label}</label>
+                                            <label style={{ fontSize: 'var(--font-sm)', fontWeight: 500, marginBottom: '0.15rem', display: 'block', color: f.color || 'var(--text)' }}>{f.label}</label>
                                             <input className="input" type="number" min={0}
                                                 value={newRow[f.key] || ''}
                                                 onChange={e => setNewRow(p => ({ ...p, [f.key]: parseInt(e.target.value) || 0 }))}
-                                                style={{ width: '100%', fontSize: '0.85rem', padding: '0.45rem 0.5rem', textAlign: 'center' }}
+                                                style={{ width: '100%', fontSize: 'var(--font-md)', padding: '0.45rem 0.5rem', textAlign: 'center' }}
                                             />
                                         </div>
                                     ))}
@@ -549,22 +549,22 @@ export default function StaffDashboard() {
                                 <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 1.25rem' }} />
 
                                 {/* Budget: 2-column */}
-                                <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.65rem' }}>Ngân sách</h3>
+                                <h3 style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.65rem' }}>Ngân sách</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem', marginBottom: '1.5rem' }}>
                                     <div>
-                                        <label style={{ fontSize: '0.7rem', fontWeight: 500, marginBottom: '0.15rem', display: 'block' }}>NS Mục tiêu</label>
+                                        <label style={{ fontSize: 'var(--font-sm)', fontWeight: 500, marginBottom: '0.15rem', display: 'block' }}>NS Mục tiêu</label>
                                         <input className="input" type="number" min={0}
                                             value={newRow.budgetTarget || ''}
                                             onChange={e => setNewRow(p => ({ ...p, budgetTarget: parseInt(e.target.value) || 0 }))}
-                                            style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
+                                            style={{ width: '100%', fontSize: 'var(--font-md)', padding: '0.5rem 0.75rem' }}
                                         />
                                     </div>
                                     <div>
-                                        <label style={{ fontSize: '0.7rem', fontWeight: 500, marginBottom: '0.15rem', display: 'block' }}>NS Thực tế</label>
+                                        <label style={{ fontSize: 'var(--font-sm)', fontWeight: 500, marginBottom: '0.15rem', display: 'block' }}>NS Thực tế</label>
                                         <input className="input" type="number" min={0}
                                             value={newRow.budgetActual || ''}
                                             onChange={e => setNewRow(p => ({ ...p, budgetActual: parseInt(e.target.value) || 0 }))}
-                                            style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
+                                            style={{ width: '100%', fontSize: 'var(--font-md)', padding: '0.5rem 0.75rem' }}
                                         />
                                     </div>
                                 </div>
@@ -572,12 +572,12 @@ export default function StaffDashboard() {
                                 {/* Actions */}
                                 {/* Update log */}
                                 {editingEntry?.updatedBy && (
-                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                         🕐 Cập nhật lần cuối: <strong>{editingEntry.updatedBy}</strong> — {editingEntry.updatedAt}
                                     </div>
                                 )}
                                 {editingEntry && !editingEntry.updatedBy && (
-                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                         📝 Người nhập: <strong>{editingEntry.enteredBy}</strong> — {editingEntry.date}
                                     </div>
                                 )}

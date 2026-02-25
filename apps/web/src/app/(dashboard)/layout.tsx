@@ -115,9 +115,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         {user.name.charAt(0)}
                     </div>
                     <div className="sidebar-user-info">
-                        <div style={{ fontWeight: 700, fontSize: '0.85rem', lineHeight: 1.2 }}>{user.name}</div>
+                        <div style={{ fontWeight: 700, fontSize: 'var(--font-md)', lineHeight: 1.2 }}>{user.name}</div>
                         <div style={{
-                            fontSize: '0.6rem', color: 'white',
+                            fontSize: 'var(--font-xs)', color: 'white',
                             background: ROLE_BADGE_COLORS[user.role] || '#6366F1',
                             padding: '0.1rem 0.4rem', borderRadius: '999px',
                             display: 'inline-block', fontWeight: 600, marginTop: '0.15rem',

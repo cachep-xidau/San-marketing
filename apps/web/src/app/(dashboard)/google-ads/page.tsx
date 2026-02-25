@@ -25,7 +25,7 @@ function KpiCard({ label, value, sub, color }: { label: string; value: string; s
         <div className="kpi-card">
             <h3>{label}</h3>
             <div className="value" style={{ color: color || 'var(--text)' }}>{value}</div>
-            {sub && <div className="trend" style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{sub}</div>}
+            {sub && <div className="trend" style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>{sub}</div>}
         </div>
     );
 }
@@ -40,7 +40,7 @@ function StatusBadge({ status }: { status: string }) {
     const c = config[status] || config.ENABLED;
     return (
         <span style={{
-            padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.7rem',
+            padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: 'var(--font-sm)',
             fontWeight: 600, background: c.bg, color: c.color, whiteSpace: 'nowrap',
         }}>
             {c.label}
@@ -153,7 +153,7 @@ export default function GoogleAdsPage() {
                         </svg>
                         Google Ads
                     </h1>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                    <p style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                         Dữ liệu quảng cáo Google Ads{data?.lastUpdated && ` • Cập nhật: ${new Date(data.lastUpdated).toLocaleString('vi-VN')}`}
                     </p>
                 </div>
@@ -167,9 +167,9 @@ export default function GoogleAdsPage() {
             <div style={{
                 background: 'rgba(66, 133, 244, 0.06)', border: '1px solid rgba(66, 133, 244, 0.15)',
                 borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', marginBottom: '1.25rem',
-                fontSize: '0.8rem', color: '#1a73e8', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                fontSize: 'var(--font-base)', color: '#1a73e8', display: 'flex', alignItems: 'center', gap: '0.5rem',
             }}>
-                <span style={{ fontSize: '1rem' }}>ℹ️</span>
+                <span style={{ fontSize: 'var(--font-lg)' }}>ℹ️</span>
                 <span>
                     <strong>Demo mode</strong> — Chưa kết nối Google Sheets. Hiện đang hiển thị dữ liệu mẫu.
                     Cài đặt <code>GOOGLE_SHEETS_ID</code> và <code>GOOGLE_SERVICE_ACCOUNT_KEY</code> trong env để kết nối.
@@ -190,7 +190,7 @@ export default function GoogleAdsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <IconFilter size={14} />
-                        <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>Bộ lọc:</span>
+                        <span style={{ fontSize: 'var(--font-base)', fontWeight: 500 }}>Bộ lọc:</span>
                     </div>
 
                     <select
@@ -215,7 +215,7 @@ export default function GoogleAdsPage() {
                         <option value="REMOVED">Đã xóa</option>
                     </select>
 
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>
                         {aggregated.length} chiến dịch
                     </span>
                 </div>
@@ -248,29 +248,29 @@ export default function GoogleAdsPage() {
                             ) : (
                                 aggregated.map((c, i) => (
                                     <tr key={i}>
-                                        <td style={{ fontSize: '0.8rem', fontWeight: 500 }}>{c.account}</td>
+                                        <td style={{ fontSize: 'var(--font-base)', fontWeight: 500 }}>{c.account}</td>
                                         <td>
-                                            <div style={{ fontSize: '0.8rem', fontWeight: 500 }}>{c.campaign}</div>
+                                            <div style={{ fontSize: 'var(--font-base)', fontWeight: 500 }}>{c.campaign}</div>
                                             {c.days > 1 && (
-                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                                                <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
                                                     {c.days} ngày
                                                 </div>
                                             )}
                                         </td>
                                         <td><StatusBadge status={c.status} /></td>
-                                        <td style={{ textAlign: 'right', fontSize: '0.8rem' }}>{fmtNum(c.impressions)}</td>
-                                        <td style={{ textAlign: 'right', fontSize: '0.8rem' }}>{fmtNum(c.clicks)}</td>
-                                        <td style={{ textAlign: 'right', fontSize: '0.8rem', fontWeight: 600, color: '#e53935' }}>
+                                        <td style={{ textAlign: 'right', fontSize: 'var(--font-base)' }}>{fmtNum(c.impressions)}</td>
+                                        <td style={{ textAlign: 'right', fontSize: 'var(--font-base)' }}>{fmtNum(c.clicks)}</td>
+                                        <td style={{ textAlign: 'right', fontSize: 'var(--font-base)', fontWeight: 600, color: '#e53935' }}>
                                             {fmtMoney(c.spend)}₫
                                         </td>
-                                        <td style={{ textAlign: 'right', fontSize: '0.8rem', fontWeight: 600 }}>
+                                        <td style={{ textAlign: 'right', fontSize: 'var(--font-base)', fontWeight: 600 }}>
                                             {c.conversions}
                                         </td>
-                                        <td style={{ textAlign: 'right', fontSize: '0.8rem' }}>
+                                        <td style={{ textAlign: 'right', fontSize: 'var(--font-base)' }}>
                                             {fmtMoney(c.cpa)}₫
                                         </td>
                                         <td style={{
-                                            textAlign: 'right', fontSize: '0.8rem', fontWeight: 600,
+                                            textAlign: 'right', fontSize: 'var(--font-base)', fontWeight: 600,
                                             color: c.roas >= 3 ? '#16a34a' : c.roas >= 2 ? '#d97706' : '#dc2626',
                                         }}>
                                             {c.roas.toFixed(1)}x

@@ -27,6 +27,28 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03);
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
     --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.03);
+
+    /* ─── Typography Scale ─── */
+    --font-xs: 0.65rem;
+    /* 9.75px — micro labels, badges */
+    --font-sm: 0.75rem;
+    /* 11.25px — captions, table data */
+    --font-base: 0.8rem;
+    /* 12px — body, filters, buttons */
+    --font-md: 0.85rem;
+    /* 12.75px — descriptions, card names */
+    --font-lg: 1rem;
+    /* 15px — card metric values */
+    --font-xl: 1.125rem;
+    /* 16.9px — section headings */
+    --font-2xl: 1.5rem;
+    /* 22.5px — KPI hero values */
+
+    /* ─── Weight Scale ─── */
+    --weight-normal: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
 }
 
 * {
@@ -595,8 +617,15 @@ body {
 }
 
 @keyframes dpSlideDown {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .dp-header {
@@ -728,4 +757,68 @@ body {
 .dp-clear-btn:hover {
     color: var(--danger);
     background: rgba(211, 47, 47, 0.05);
+}
+
+/* ═══════════════════════════════════════════
+   Typography Utility Classes
+   ═══════════════════════════════════════════ */
+
+.text-xs {
+    font-size: var(--font-xs);
+}
+
+.text-sm {
+    font-size: var(--font-sm);
+}
+
+.text-base {
+    font-size: var(--font-base);
+}
+
+.text-md {
+    font-size: var(--font-md);
+}
+
+.text-lg {
+    font-size: var(--font-lg);
+}
+
+.text-xl {
+    font-size: var(--font-xl);
+}
+
+.text-2xl {
+    font-size: var(--font-2xl);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.font-normal {
+    font-weight: var(--weight-normal);
+}
+
+.font-medium {
+    font-weight: var(--weight-medium);
+}
+
+.font-semibold {
+    font-weight: var(--weight-semibold);
+}
+
+.font-bold {
+    font-weight: var(--weight-bold);
+}
+
+.text-label {
+    font-size: var(--font-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }

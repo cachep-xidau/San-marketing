@@ -99,7 +99,7 @@ function SpendBar({ data }: { data: ChannelMetrics[] }) {
                         width: `${(d.spend / total) * 100}%`,
                         background: CHANNEL_COLORS[d.channel],
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.7rem', fontWeight: 600, color: 'white',
+                        fontSize: 'var(--font-sm)', fontWeight: 600, color: 'white',
                         minWidth: 40,
                         transition: 'width 0.3s',
                     }}
@@ -146,7 +146,7 @@ function DonutChart({ data, metric, label }: { data: ChannelMetrics[]; metric: k
                 <text x={cx} y={cy - 4} textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--text)">{total.toLocaleString('vi-VN')}</text>
                 <text x={cx} y={cy + 12} textAnchor="middle" fontSize="8" fill="var(--text-muted)">{label}</text>
             </svg>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.5rem', fontSize: '0.7rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.5rem', fontSize: 'var(--font-sm)' }}>
                 {data.map(d => (
                     <span key={d.channel} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                         <span style={{ width: 8, height: 8, borderRadius: 2, background: CHANNEL_COLORS[d.channel], display: 'inline-block' }} />
@@ -213,30 +213,30 @@ export default function ComparisonPage() {
             {/* Charts Row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <h3 style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Leads</h3>
+                    <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Leads</h3>
                     <DonutChart data={data} metric="leads" label="Leads" />
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <h3 style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Conversions</h3>
+                    <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Conversions</h3>
                     <DonutChart data={data} metric="conversions" label="Conversions" />
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <h3 style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Chi tiêu</h3>
+                    <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, marginBottom: '1rem' }}>Phân bổ Chi tiêu</h3>
                     <DonutChart data={data} metric="spend" label="VND" />
                 </div>
             </div>
 
             {/* Sparkline Trends */}
             <div style={{ marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem' }}><IconTrendUp size={18} /> Xu hướng Leads theo ngày</h2>
+                <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 600, marginBottom: '1rem' }}><IconTrendUp size={18} /> Xu hướng Leads theo ngày</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                     {data.map(d => (
                         <div className="card" key={d.channel}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                <h3 style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600 }}>
                                     <span style={{ color: CHANNEL_COLORS[d.channel] }}>●</span> {CHANNEL_LABELS[d.channel]}
                                 </h3>
-                                <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{d.leads} leads</span>
+                                <span style={{ fontSize: 'var(--font-base)', fontWeight: 600 }}>{d.leads} leads</span>
                             </div>
                             <MiniBarChart data={DAILY_LEADS[mockRange][d.channel]} color={CHANNEL_COLORS[d.channel]} width={300} height={50} />
                         </div>
@@ -246,9 +246,9 @@ export default function ComparisonPage() {
 
             {/* Detailed Comparison Table */}
             <div>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem' }}><IconChart size={18} /> So sánh chi tiết</h2>
+                <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 600, marginBottom: '1rem' }}><IconChart size={18} /> So sánh chi tiết</h2>
                 <div className="card" style={{ padding: 0, overflow: 'auto' }}>
-                    <table className="table" style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                    <table className="table" style={{ fontSize: 'var(--font-sm)', whiteSpace: 'nowrap' }}>
                         <thead>
                             <tr style={{ background: 'var(--bg-card)' }}>
                                 <th>KÊNH</th>
@@ -267,7 +267,7 @@ export default function ComparisonPage() {
                             {data.map(d => (
                                 <tr key={d.channel}>
                                     <td style={{ fontWeight: 500 }}><span style={{ color: CHANNEL_COLORS[d.channel] }}>●</span> {CHANNEL_LABELS[d.channel]}</td>
-                                    <td style={{ textAlign: 'right', fontSize: '0.75rem' }}>{formatVND(d.spend)}</td>
+                                    <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{formatVND(d.spend)}</td>
                                     <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{d.leads.toLocaleString('vi-VN')}</td>
                                     <td style={{ textAlign: 'right' }}>
                                         <span style={{ color: d.cpl < 200_000 ? 'var(--success)' : d.cpl < 230_000 ? 'var(--warning)' : 'var(--danger)' }}>
@@ -286,7 +286,7 @@ export default function ComparisonPage() {
                             ))}
                             <tr style={{ fontWeight: 600, borderTop: '2px solid var(--border)', background: 'var(--bg-hover, rgba(0,0,0,0.02))' }}>
                                 <td>Tổng</td>
-                                <td style={{ textAlign: 'right', fontSize: '0.75rem' }}>{formatVND(totalSpend)}</td>
+                                <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{formatVND(totalSpend)}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{totalLeads.toLocaleString('vi-VN')}</td>
                                 <td style={{ textAlign: 'right' }}>{formatVND(avgCPL)}</td>
                                 <td style={{ textAlign: 'right' }}>{data.reduce((s, d) => s + d.impressions, 0).toLocaleString('vi-VN')}</td>

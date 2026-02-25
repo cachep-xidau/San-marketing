@@ -229,7 +229,7 @@ export default function ReportPage() {
             <div className="page-header" style={{ marginBottom: '1rem' }}>
                 <div>
                     <h1 style={{ fontWeight: 800 }}>Báo cáo</h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-md)', marginTop: '0.25rem' }}>
                         Báo cáo tổng hợp hiệu quả chiến dịch
                     </p>
                 </div>
@@ -241,7 +241,7 @@ export default function ReportPage() {
                         customEnd={customEnd}
                         onCustomDateChange={(s, e) => { setCustomStart(s); setCustomEnd(e); }}
                     />
-                    <button className="btn btn-outline" style={{ fontSize: '0.8rem' }}>
+                    <button className="btn btn-outline" style={{ fontSize: 'var(--font-base)' }}>
                         <IconDownload size={14} /> Xuất Excel
                     </button>
                 </div>
@@ -276,12 +276,12 @@ export default function ReportPage() {
                                     width: 26, height: 26, borderRadius: 6,
                                     background: card.color,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: 'white', fontWeight: 700, fontSize: '0.7rem',
+                                    color: 'white', fontWeight: 700, fontSize: 'var(--font-sm)',
                                 }}>{card.shortName}</div>
-                                <span style={{ fontWeight: 600, fontSize: '0.85rem', flex: 1 }}>{card.label}</span>
+                                <span style={{ fontWeight: 600, fontSize: 'var(--font-md)', flex: 1 }}>{card.label}</span>
                                 {isActive && (
                                     <span style={{
-                                        fontSize: '0.65rem', fontWeight: 600,
+                                        fontSize: 'var(--font-xs)', fontWeight: 600,
                                         background: card.color, color: 'white',
                                         padding: '0.15rem 0.5rem', borderRadius: 9999,
                                     }}>Đang chọn</span>
@@ -291,22 +291,22 @@ export default function ReportPage() {
                             {/* Metrics: 2×2 grid — Lead, Chốt, Tỷ lệ chốt, Doanh thu */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 0.25rem' }}>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{card.totals.totalLead.toLocaleString('vi-VN')}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
+                                    <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{card.totals.totalLead.toLocaleString('vi-VN')}</div>
                                 </div>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chốt</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--success)' }}>{card.totals.closed.toLocaleString('vi-VN')}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chốt</div>
+                                    <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)', color: 'var(--success)' }}>{card.totals.closed.toLocaleString('vi-VN')}</div>
                                 </div>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tỷ lệ chốt</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem', color: closeRate >= 20 ? 'var(--success)' : closeRate >= 10 ? 'var(--warning)' : 'var(--danger)' }}>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tỷ lệ chốt</div>
+                                    <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)', color: closeRate >= 20 ? 'var(--success)' : closeRate >= 10 ? 'var(--warning)' : 'var(--danger)' }}>
                                         {closeRate.toFixed(1)}%
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chiến dịch</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{card.campaigns}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chiến dịch</div>
+                                    <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{card.campaigns}</div>
                                 </div>
                             </div>
                         </div>
@@ -316,7 +316,7 @@ export default function ReportPage() {
 
             {/* ═══ Funnel Visualization ═══ */}
             <div className="card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ fontSize: 'var(--font-md)', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <IconFile size={16} /> Phễu chuyển đổi — {activeLabel}
                 </div>
 
@@ -333,14 +333,14 @@ export default function ReportPage() {
 
                         return (
                             <div key={stage.key} style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '0.25rem' }}>
+                                <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: '0.25rem' }}>
                                     {stage.label}
                                 </div>
-                                <div style={{ fontSize: '1.15rem', fontWeight: 700, color: stage.color, lineHeight: 1.2 }}>
+                                <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: stage.color, lineHeight: 1.2 }}>
                                     {stage.key === 'bill' ? formatVND(val) : val.toLocaleString('vi-VN')}
                                 </div>
                                 {/* Percentage labels with period comparison */}
-                                <div style={{ fontSize: '0.65rem', marginTop: '0.2rem' }}>
+                                <div style={{ fontSize: 'var(--font-xs)', marginTop: '0.2rem' }}>
                                     {i === 0 ? (
                                         <span style={{ color: 'var(--text-muted)' }}>100%</span>
                                     ) : stage.key === 'bill' ? (
@@ -387,7 +387,7 @@ export default function ReportPage() {
                                     background: stage.color,
                                     opacity: 1 - i * 0.08,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '0.65rem', fontWeight: 600, color: 'white',
+                                    fontSize: 'var(--font-xs)', fontWeight: 600, color: 'white',
                                     transition: 'width 0.3s ease',
                                     borderRight: i < FUNNEL_STAGES.length - 1 ? '1px solid rgba(255,255,255,0.3)' : 'none',
                                 }}
@@ -400,7 +400,7 @@ export default function ReportPage() {
                 </div>
 
                 {/* Legend */}
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
                     <span>◆ <strong>X%</strong> = tỷ lệ chuyển đổi so với bước trước</span>
                     <span>◆ <span style={{ color: 'var(--success)' }}>xanh</span> = cao hơn kỳ trước</span>
                     <span>◆ <span style={{ color: 'var(--danger)' }}>đỏ</span> = thấp hơn kỳ trước</span>
@@ -423,14 +423,14 @@ export default function ReportPage() {
                         <option key={ch} value={ch}>{CHANNEL_LABELS[ch] || ch}</option>
                     ))}
                 </select>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)' }}>
                     {currentRows.length} chiến dịch
                 </span>
             </div>
 
             {/* ═══ Detail Table ═══ */}
             <div className="card" style={{ overflow: 'auto', padding: 0 }}>
-                <table className="table" style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                <table className="table" style={{ fontSize: 'var(--font-sm)', whiteSpace: 'nowrap' }}>
                     <thead>
                         <tr style={{ background: 'var(--bg-card)' }}>
                             <th style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 3, minWidth: 35 }}>#</th>
@@ -450,7 +450,7 @@ export default function ReportPage() {
                     <tbody>
                         {currentRows.map((row, idx) => (
                             <tr key={row.id + idx}>
-                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2, color: 'var(--text-muted)', fontSize: '0.7rem', minWidth: 35 }}>{idx + 1}</td>
+                                <td style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 2, color: 'var(--text-muted)', fontSize: 'var(--font-sm)', minWidth: 35 }}>{idx + 1}</td>
                                 <td style={{ position: 'sticky', left: 35, background: 'var(--bg-card)', zIndex: 2, minWidth: 90 }}>
                                     <span style={{ color: CHANNEL_COLORS[row.channel] || '#6B7280' }}>●</span>{' '}
                                     {CHANNEL_LABELS[row.channel] || row.channel}
@@ -463,8 +463,8 @@ export default function ReportPage() {
                                 <td style={{ textAlign: 'center' }}>{row.booked.toLocaleString('vi-VN')}</td>
                                 <td style={{ textAlign: 'center' }}>{row.arrived.toLocaleString('vi-VN')}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--success)' }}>{row.closed.toLocaleString('vi-VN')}</td>
-                                <td style={{ textAlign: 'right', fontSize: '0.75rem' }}>{row.bill > 0 ? formatVND(row.bill) : '—'}</td>
-                                <td style={{ textAlign: 'right', fontSize: '0.75rem' }}>{row.budgetActual > 0 ? formatVND(row.budgetActual) : '—'}</td>
+                                <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{row.bill > 0 ? formatVND(row.bill) : '—'}</td>
+                                <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{row.budgetActual > 0 ? formatVND(row.budgetActual) : '—'}</td>
                             </tr>
                         ))}
 

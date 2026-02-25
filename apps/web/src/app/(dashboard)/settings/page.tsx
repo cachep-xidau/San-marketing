@@ -160,7 +160,7 @@ export default function SettingsPage() {
                             borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
                             color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
                             fontWeight: 600,
-                            fontSize: '0.9rem',
+                            fontSize: 'var(--font-lg)',
                             cursor: 'pointer',
                             transition: 'all 0.15s',
                         }}
@@ -181,7 +181,7 @@ export default function SettingsPage() {
                                     width: 48, height: 48, borderRadius: 12,
                                     background: `${CHANNEL_COLORS[conn.channel]}15`,
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '1.5rem', flexShrink: 0,
+                                    fontSize: 'var(--font-2xl)', flexShrink: 0,
                                 }}>
                                     {CHANNEL_ICON[conn.channel]}
                                 </div>
@@ -189,26 +189,26 @@ export default function SettingsPage() {
                                 {/* Info */}
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-                                        <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>{CHANNEL_LABELS[conn.channel]}</h3>
-                                        <span className={`badge ${conn.connected ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: '0.7rem' }}>
+                                        <h3 style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{CHANNEL_LABELS[conn.channel]}</h3>
+                                        <span className={`badge ${conn.connected ? 'badge-success' : 'badge-danger'}`} style={{ fontSize: 'var(--font-sm)' }}>
                                             {conn.connected ? '● Đã kết nối' : '○ Chưa kết nối'}
                                         </span>
                                     </div>
 
                                     {conn.connected ? (
                                         <>
-                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                                                {conn.accountName} • <code style={{ fontSize: '0.75rem', background: 'var(--bg)', padding: '0.1rem 0.4rem', borderRadius: 4 }}>{conn.accountId}</code>
+                                            <div style={{ fontSize: 'var(--font-md)', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                                {conn.accountName} • <code style={{ fontSize: 'var(--font-sm)', background: 'var(--bg)', padding: '0.1rem 0.4rem', borderRadius: 4 }}>{conn.accountId}</code>
                                             </div>
 
                                             {/* Sync Status Row */}
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: '0.8rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', fontSize: 'var(--font-base)', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                                                 <div>
                                                     <span style={{ color: 'var(--text-muted)' }}>Đồng bộ lần cuối: </span>
                                                     <span style={{ fontWeight: 500 }}>{conn.lastSync}</span>
                                                 </div>
                                                 {conn.syncStatus && (
-                                                    <span className={`badge ${SYNC_STATUS_MAP[conn.syncStatus].badge}`} style={{ fontSize: '0.7rem' }}>
+                                                    <span className={`badge ${SYNC_STATUS_MAP[conn.syncStatus].badge}`} style={{ fontSize: 'var(--font-sm)' }}>
                                                         {conn.syncStatus === 'success' ? <IconCheck size={12} /> : conn.syncStatus === 'syncing' ? <IconSync size={12} /> : <IconClock size={12} />} {SYNC_STATUS_MAP[conn.syncStatus].label}
                                                     </span>
                                                 )}
@@ -225,7 +225,7 @@ export default function SettingsPage() {
                                             {/* Ad Accounts */}
                                             {conn.adAccounts && conn.adAccounts.length > 0 && (
                                                 <div style={{ marginBottom: '0.75rem' }}>
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                                                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
                                                         Tài khoản quảng cáo
                                                     </div>
                                                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -236,7 +236,7 @@ export default function SettingsPage() {
                                                                 background: acc.selected ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg)',
                                                                 border: `1px solid ${acc.selected ? 'var(--primary)' : 'var(--border)'}`,
                                                                 borderRadius: 'var(--radius-sm)',
-                                                                cursor: 'pointer', fontSize: '0.8rem',
+                                                                cursor: 'pointer', fontSize: 'var(--font-base)',
                                                                 transition: 'all 0.15s',
                                                             }}>
                                                                 <input
@@ -246,7 +246,7 @@ export default function SettingsPage() {
                                                                     style={{ accentColor: 'var(--primary)' }}
                                                                 />
                                                                 {acc.name}
-                                                                <code style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{acc.id}</code>
+                                                                <code style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>{acc.id}</code>
                                                             </label>
                                                         ))}
                                                     </div>
@@ -259,14 +259,14 @@ export default function SettingsPage() {
                                                     className="btn btn-primary"
                                                     onClick={() => handleSync(conn.channel)}
                                                     disabled={conn.syncStatus === 'syncing'}
-                                                    style={{ fontSize: '0.8rem', padding: '0.375rem 0.875rem' }}
+                                                    style={{ fontSize: 'var(--font-base)', padding: '0.375rem 0.875rem' }}
                                                 >
                                                     <IconSync size={14} /> {conn.syncStatus === 'syncing' ? 'Đang đồng bộ...' : 'Đồng bộ ngay'}
                                                 </button>
                                                 <button
                                                     className="btn btn-outline"
                                                     onClick={() => handleDisconnect(conn.channel)}
-                                                    style={{ fontSize: '0.8rem', padding: '0.375rem 0.875rem', color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)' }}
+                                                    style={{ fontSize: 'var(--font-base)', padding: '0.375rem 0.875rem', color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)' }}
                                                 >
                                                     Ngắt kết nối
                                                 </button>
@@ -274,14 +274,14 @@ export default function SettingsPage() {
                                         </>
                                     ) : (
                                         <div>
-                                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                                            <p style={{ fontSize: 'var(--font-md)', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
                                                 Kết nối tài khoản {CHANNEL_LABELS[conn.channel]} để tự động đồng bộ dữ liệu chiến dịch
                                             </p>
                                             <button
                                                 className="btn btn-primary"
                                                 onClick={() => handleConnect(conn.channel)}
                                                 disabled={connectingChannel === conn.channel}
-                                                style={{ fontSize: '0.85rem' }}
+                                                style={{ fontSize: 'var(--font-md)' }}
                                             >
                                                 {connectingChannel === conn.channel
                                                     ? <><IconSync size={14} /> Đang kết nối...</>
@@ -317,7 +317,7 @@ export default function SettingsPage() {
                                     <td>
                                         <span style={{ color: CHANNEL_COLORS[r.channel] }}>●</span> {CHANNEL_LABELS[r.channel]}
                                     </td>
-                                    <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{r.timestamp}</td>
+                                    <td style={{ fontFamily: 'monospace', fontSize: 'var(--font-base)' }}>{r.timestamp}</td>
                                     <td style={{ fontWeight: 500 }}>{r.rows.toLocaleString('vi-VN')}</td>
                                     <td>{r.duration}</td>
                                     <td>
@@ -325,7 +325,7 @@ export default function SettingsPage() {
                                             {r.status === 'success' ? <><IconCheck size={12} /> OK</> : <><IconClose size={12} /> Lỗi</>}
                                         </span>
                                     </td>
-                                    <td style={{ fontSize: '0.8rem', color: r.errorMsg ? 'var(--danger)' : 'var(--text-muted)' }}>
+                                    <td style={{ fontSize: 'var(--font-base)', color: r.errorMsg ? 'var(--danger)' : 'var(--text-muted)' }}>
                                         {r.errorMsg || '—'}
                                     </td>
                                 </tr>

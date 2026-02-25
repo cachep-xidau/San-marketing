@@ -158,7 +158,7 @@ function TrendBadge({ value, suffix }: { value: number; suffix?: string }) {
     const isUp = value > 0;
     const color = isUp ? 'var(--success)' : 'var(--danger)';
     return (
-        <span style={{ color, fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}>
+        <span style={{ color, fontSize: 'var(--font-base)', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}>
             <span>{isUp ? '↑' : '↓'}</span>
             {isUp ? '+' : ''}{value.toFixed(1)}%{suffix ? ` ${suffix}` : ''}
         </span>
@@ -209,7 +209,7 @@ function ChartCard({
                     alignItems: 'center',
                     gap: '0.35rem',
                     color: 'var(--text-muted)',
-                    fontSize: '0.7rem',
+                    fontSize: 'var(--font-sm)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',
                     marginBottom: '0.35rem',
@@ -217,7 +217,7 @@ function ChartCard({
                     {icon}
                     {title}
                 </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, lineHeight: 1.15, marginBottom: '0.3rem' }}>
+                <div style={{ fontSize: 'var(--font-2xl)', fontWeight: 700, lineHeight: 1.15, marginBottom: '0.3rem' }}>
                     {value}
                 </div>
                 <TrendBadge value={delta} suffix={`vs ${periodLabel} trước`} />
@@ -303,7 +303,7 @@ export default function CMODashboard() {
             <div className="page-header">
                 <div>
                     <h1 style={{ fontWeight: 800 }}>Tổng quan</h1>
-                    {user && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                    {user && <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-md)', marginTop: '0.25rem' }}>
                         {user.name} — {activeLabel}
                     </p>}
                 </div>
@@ -359,13 +359,13 @@ export default function CMODashboard() {
                                         width: 26, height: 26, borderRadius: 6,
                                         background: card.color,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        color: 'white', fontWeight: 700, fontSize: '0.7rem',
+                                        color: 'white', fontWeight: 700, fontSize: 'var(--font-sm)',
                                     }}>{card.initial}</div>
                                 )}
-                                <span style={{ fontWeight: 600, fontSize: '0.85rem', flex: 1 }}>{card.label}</span>
+                                <span style={{ fontWeight: 600, fontSize: 'var(--font-md)', flex: 1 }}>{card.label}</span>
                                 {isActive && (
                                     <span style={{
-                                        fontSize: '0.65rem', fontWeight: 600,
+                                        fontSize: 'var(--font-xs)', fontWeight: 600,
                                         background: card.color, color: 'white',
                                         padding: '0.15rem 0.5rem', borderRadius: 9999,
                                     }}>Đang chọn</span>
@@ -375,22 +375,22 @@ export default function CMODashboard() {
                             {/* Metrics: 2x2 grid */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 0.25rem' }}>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{card.metrics.leads.toLocaleString('vi-VN')}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
+                                    <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{card.metrics.leads.toLocaleString('vi-VN')}</div>
                                     <TrendBadge value={card.delta.leads} />
                                 </div>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chi tiêu</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{formatVND(card.metrics.spend)}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chi tiêu</div>
+                                    <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{formatVND(card.metrics.spend)}</div>
                                     <TrendBadge value={card.delta.spend} />
                                 </div>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>CPL</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{cpl > 0 ? formatVND(cpl) : '—'}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>CPL</div>
+                                    <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{cpl > 0 ? formatVND(cpl) : '—'}</div>
                                 </div>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chiến dịch</div>
-                                    <div style={{ fontWeight: 700, fontSize: '1rem' }}>{card.active}<span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>/{card.campaigns}</span></div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chiến dịch</div>
+                                    <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{card.active}<span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>/{card.campaigns}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -443,11 +443,11 @@ export default function CMODashboard() {
                 const barMax = Math.max(...top5.map(c => c.leads), 1);
                 return (
                     <div className="card" style={{ padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
-                        <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.75rem' }}>Top kênh theo leads</div>
+                        <div style={{ fontSize: 'var(--font-sm)', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.75rem' }}>Top kênh theo leads</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                             {top5.map(ch => (
                                 <div key={ch.channel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ width: 80, fontSize: '0.75rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
+                                    <span style={{ width: 80, fontSize: 'var(--font-sm)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
                                         <span style={{ color: CHANNEL_COLORS[ch.channel] || '#6B7280' }}>●</span> {CHANNEL_LABELS[ch.channel] || ch.channel}
                                     </span>
                                     <div style={{ flex: 1, height: 14, background: 'var(--bg)', borderRadius: 4, overflow: 'hidden' }}>
@@ -460,7 +460,7 @@ export default function CMODashboard() {
                                             transition: 'width 0.3s ease',
                                         }} />
                                     </div>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, width: 40, textAlign: 'right', flexShrink: 0 }}>{ch.leads}</span>
+                                    <span style={{ fontSize: 'var(--font-sm)', fontWeight: 600, width: 40, textAlign: 'right', flexShrink: 0 }}>{ch.leads}</span>
                                 </div>
                             ))}
                         </div>
@@ -470,9 +470,9 @@ export default function CMODashboard() {
 
             {/* ═══ Channel Performance Table ═══ */}
             <div style={{ marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 600, marginBottom: '1rem' }}>
                     <IconChart size={18} /> Hiệu suất theo kênh
-                    <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+                    <span style={{ fontWeight: 400, fontSize: 'var(--font-base)', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
                         ({periodLabel} gần nhất — {activeLabel})
                     </span>
                 </h2>
@@ -488,7 +488,7 @@ export default function CMODashboard() {
                                         style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
                                     >
                                         {{ leads: 'Leads', conversions: 'Conversions', spend: 'Chi tiêu', cpl: 'CPL' }[key]}
-                                        {sortKey === key && <span style={{ marginLeft: 4, fontSize: '0.7rem' }}>{sortDir === 'desc' ? '↓' : '↑'}</span>}
+                                        {sortKey === key && <span style={{ marginLeft: 4, fontSize: 'var(--font-sm)' }}>{sortDir === 'desc' ? '↓' : '↑'}</span>}
                                     </th>
                                 ))}
                             </tr>

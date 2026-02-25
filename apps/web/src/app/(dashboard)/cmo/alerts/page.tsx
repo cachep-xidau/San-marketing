@@ -103,14 +103,14 @@ export default function AlertsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <h1>Cảnh báo</h1>
                     {unacknowledged > 0 && (
-                        <span className="badge badge-danger" style={{ fontSize: '0.75rem' }}>
+                        <span className="badge badge-danger" style={{ fontSize: 'var(--font-sm)' }}>
                             {unacknowledged} mới
                         </span>
                     )}
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     {unacknowledged > 0 && (
-                        <button className="btn btn-outline" onClick={acknowledgeAll} style={{ fontSize: '0.8rem' }}>
+                        <button className="btn btn-outline" onClick={acknowledgeAll} style={{ fontSize: 'var(--font-base)' }}>
                             <IconCheck size={14} /> Đánh dấu tất cả đã đọc
                         </button>
                     )}
@@ -125,12 +125,12 @@ export default function AlertsPage() {
                 <div className="kpi-card" style={{ borderLeft: '3px solid var(--danger)' }}>
                     <h3>Critical</h3>
                     <div className="value" style={{ color: 'var(--danger)' }}>{logs.filter(l => l.severity === 'critical' && !l.acknowledged).length}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>chưa xử lý</div>
+                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>chưa xử lý</div>
                 </div>
                 <div className="kpi-card" style={{ borderLeft: '3px solid var(--warning)' }}>
                     <h3>Warning</h3>
                     <div className="value" style={{ color: 'var(--warning)' }}>{logs.filter(l => l.severity === 'warning' && !l.acknowledged).length}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>chưa xử lý</div>
+                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>chưa xử lý</div>
                 </div>
                 <div className="kpi-card">
                     <h3>Quy tắc active</h3>
@@ -152,7 +152,7 @@ export default function AlertsPage() {
                             padding: '0.75rem 1.5rem', background: 'none', border: 'none',
                             borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
                             color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
-                            fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.15s',
+                            fontWeight: 600, fontSize: 'var(--font-lg)', cursor: 'pointer', transition: 'all 0.15s',
                             display: 'flex', alignItems: 'center', gap: '0.5rem',
                         }}
                     >
@@ -185,18 +185,18 @@ export default function AlertsPage() {
 
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
-                                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{log.ruleName}</span>
-                                        <span className={`badge ${SEVERITY_CONFIG[log.severity].badge}`} style={{ fontSize: '0.65rem' }}>
+                                        <span style={{ fontWeight: 600, fontSize: 'var(--font-lg)' }}>{log.ruleName}</span>
+                                        <span className={`badge ${SEVERITY_CONFIG[log.severity].badge}`} style={{ fontSize: 'var(--font-xs)' }}>
                                             {log.severity.toUpperCase()}
                                         </span>
-                                        <span style={{ fontSize: '0.75rem', color: CHANNEL_COLORS[log.channel] }}>
+                                        <span style={{ fontSize: 'var(--font-sm)', color: CHANNEL_COLORS[log.channel] }}>
                                             ● {CHANNEL_LABELS[log.channel]}
                                         </span>
                                     </div>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                                    <div style={{ fontSize: 'var(--font-md)', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
                                         {log.message}
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '0.75rem' }}>
+                                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', display: 'flex', gap: '0.75rem' }}>
                                         <span><IconClock size={12} /> {log.timestamp}</span>
                                     </div>
                                 </div>
@@ -206,12 +206,12 @@ export default function AlertsPage() {
                                         <button
                                             className="btn btn-outline"
                                             onClick={() => acknowledgeLog(log.id)}
-                                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem' }}
+                                            style={{ fontSize: 'var(--font-sm)', padding: '0.25rem 0.625rem' }}
                                         >
                                             <IconCheck size={12} /> Đã xem
                                         </button>
                                     ) : (
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>
                                             <IconCheck size={12} /> Đã xử lý
                                         </span>
                                     )}
@@ -248,11 +248,11 @@ export default function AlertsPage() {
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                                     <span style={{ fontWeight: 600 }}>{rule.name}</span>
-                                    <span className={`badge ${SEVERITY_CONFIG[rule.severity].badge}`} style={{ fontSize: '0.65rem' }}>
+                                    <span className={`badge ${SEVERITY_CONFIG[rule.severity].badge}`} style={{ fontSize: 'var(--font-xs)' }}>
                                         {rule.severity.toUpperCase()}
                                     </span>
                                 </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                <div style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                                         {METRIC_ICON[rule.metric]} {METRICS.find(m => m.value === rule.metric)?.label}
                                         {' '}{rule.operator} {rule.metric === 'cpl' || rule.metric === 'spend_daily' ? formatVND(rule.threshold) : rule.threshold}
@@ -271,7 +271,7 @@ export default function AlertsPage() {
                             <button
                                 className="btn btn-outline"
                                 onClick={() => deleteRule(rule.id)}
-                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.625rem', color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)' }}
+                                style={{ fontSize: 'var(--font-sm)', padding: '0.25rem 0.625rem', color: 'var(--danger)', borderColor: 'rgba(239,68,68,0.3)' }}
                             >
                                 <IconClose size={12} /> Xóa
                             </button>
@@ -323,7 +323,7 @@ function CreateRuleModal({ onClose, onCreate }: { onClose: () => void; onCreate:
             position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200,
         }} onClick={onClose}>
             <div className="card" style={{ width: '100%', maxWidth: 480, animation: 'slideUp 0.2s ease' }} onClick={e => e.stopPropagation()}>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <IconZap size={18} /> Tạo quy tắc cảnh báo
                 </h2>
 
@@ -335,7 +335,7 @@ function CreateRuleModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                 <div className="form-group">
                     <label>Kênh</label>
                     <select value={form.channel} onChange={e => setForm({ ...form, channel: e.target.value as AlertRule['channel'] })}
-                        style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: '0.875rem' }}>
+                        style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 'var(--font-md)' }}>
                         <option value="ALL">Tất cả kênh</option>
                         <option value="FACEBOOK">Facebook Ads</option>
                         <option value="TIKTOK">TikTok Ads</option>
@@ -347,14 +347,14 @@ function CreateRuleModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                     <div className="form-group">
                         <label>Chỉ số</label>
                         <select value={form.metric} onChange={e => setForm({ ...form, metric: e.target.value })}
-                            style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: '0.875rem' }}>
+                            style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 'var(--font-md)' }}>
                             {METRICS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                         </select>
                     </div>
                     <div className="form-group">
                         <label>Điều kiện</label>
                         <select value={form.operator} onChange={e => setForm({ ...form, operator: e.target.value as AlertRule['operator'] })}
-                            style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: '0.875rem' }}>
+                            style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 'var(--font-md)' }}>
                             <option value=">">&gt; lớn hơn</option>
                             <option value="<">&lt; nhỏ hơn</option>
                             <option value=">=">&ge; từ</option>
@@ -375,7 +375,7 @@ function CreateRuleModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                                 key={s}
                                 className={`btn ${form.severity === s ? 'btn-primary' : 'btn-outline'}`}
                                 onClick={() => setForm({ ...form, severity: s })}
-                                style={{ fontSize: '0.8rem', padding: '0.375rem 0.875rem', flex: 1, justifyContent: 'center' }}
+                                style={{ fontSize: 'var(--font-base)', padding: '0.375rem 0.875rem', flex: 1, justifyContent: 'center' }}
                             >
                                 {s === 'info' ? 'Info' : s === 'warning' ? 'Warning' : 'Critical'}
                             </button>
@@ -392,7 +392,7 @@ function CreateRuleModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                                 padding: '0.375rem 0.75rem',
                                 background: form.notifyVia.includes(via) ? 'rgba(99,102,241,0.08)' : 'var(--bg)',
                                 border: `1px solid ${form.notifyVia.includes(via) ? 'var(--primary)' : 'var(--border)'}`,
-                                borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8rem',
+                                borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--font-base)',
                             }}>
                                 <input type="checkbox" checked={form.notifyVia.includes(via)} onChange={() => toggleNotify(via)} style={{ accentColor: 'var(--primary)' }} />
                                 {via === 'email' ? 'Email' : 'Telegram'}

@@ -13,7 +13,7 @@ function TrendBadge({ value }: { value: number }) {
     const isUp = value > 0;
     const color = isUp ? 'var(--success)' : 'var(--danger)';
     return (
-        <span style={{ color, fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}>
+        <span style={{ color, fontSize: 'var(--font-sm)', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}>
             <span>{isUp ? '↑' : '↓'}</span>
             {isUp ? '+' : ''}{value.toFixed(1)}%
         </span>
@@ -138,7 +138,7 @@ export default function ManagerDashboard() {
             <div className="page-header">
                 <div>
                     <h1>{isPortfolio ? 'Quản lý chiến dịch' : `Chiến dịch — ${COMPANIES.find(c => c.id === selectedCompanyId)?.name}`}</h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-md)', marginTop: '0.25rem' }}>
                         {isPortfolio ? activeLabel : `${campaigns.length} chiến dịch`}
                     </p>
                 </div>
@@ -176,12 +176,12 @@ export default function ManagerDashboard() {
                                         width: 26, height: 26, borderRadius: 6,
                                         background: card.color,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        color: 'white', fontWeight: 700, fontSize: '0.7rem',
+                                        color: 'white', fontWeight: 700, fontSize: 'var(--font-sm)',
                                     }}>{card.initial}</div>
-                                    <span style={{ fontWeight: 600, fontSize: '0.85rem', flex: 1 }}>{card.label}</span>
+                                    <span style={{ fontWeight: 600, fontSize: 'var(--font-md)', flex: 1 }}>{card.label}</span>
                                     {isActive && (
                                         <span style={{
-                                            fontSize: '0.65rem', fontWeight: 600,
+                                            fontSize: 'var(--font-xs)', fontWeight: 600,
                                             background: card.color, color: 'white',
                                             padding: '0.15rem 0.5rem', borderRadius: 9999,
                                         }}>Đang chọn</span>
@@ -191,20 +191,20 @@ export default function ManagerDashboard() {
                                 {/* Metrics: 2x2 grid */}
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 0.25rem' }}>
                                     <div>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
-                                        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{card.leads.toLocaleString('vi-VN')}</div>
+                                        <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
+                                        <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{card.leads.toLocaleString('vi-VN')}</div>
                                     </div>
                                     <div>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chi tiêu</div>
-                                        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{formatVND(card.spend)}</div>
+                                        <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chi tiêu</div>
+                                        <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{formatVND(card.spend)}</div>
                                     </div>
                                     <div>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>CPL</div>
-                                        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{card.cpl > 0 ? formatVND(card.cpl) : '—'}</div>
+                                        <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>CPL</div>
+                                        <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{card.cpl > 0 ? formatVND(card.cpl) : '—'}</div>
                                     </div>
                                     <div>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chiến dịch</div>
-                                        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{card.active}<span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>/{card.campaigns}</span></div>
+                                        <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chiến dịch</div>
+                                        <div style={{ fontWeight: 700, fontSize: 'var(--font-lg)' }}>{card.active}<span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>/{card.campaigns}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -215,7 +215,7 @@ export default function ManagerDashboard() {
 
             {/* ═══ Filters ═══ */}
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: 'var(--font-base)', color: 'var(--text-muted)' }}>
                     <IconFilter size={14} /> Lọc:
                 </div>
                 <select value={filterChannel} onChange={e => setFilterChannel(e.target.value)}
@@ -231,12 +231,12 @@ export default function ManagerDashboard() {
                     <option value="BẬT">BẬT</option>
                     <option value="TẮT">TẮT</option>
                 </select>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{filtered.length} chiến dịch</span>
+                <span style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)' }}>{filtered.length} chiến dịch</span>
             </div>
 
             {/* ═══ Campaign Table ═══ */}
             <div className="card" style={{ overflow: 'auto', padding: 0 }}>
-                <table className="table" style={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                <table className="table" style={{ fontSize: 'var(--font-sm)', whiteSpace: 'nowrap' }}>
                     <thead>
                         <tr style={{ background: 'var(--bg-card)' }}>
                             <th style={{ width: 60 }}>BẬT/TẮT</th>
@@ -249,7 +249,7 @@ export default function ManagerDashboard() {
                                     style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', ...(key === 'leads' ? { fontWeight: 700, color: 'var(--primary)' } : {}) }}
                                 >
                                     {{ leads: 'LEADS', spend: 'CHI TIÊU', clicks: 'CLICKS' }[key]}
-                                    {sortKey === key && <span style={{ marginLeft: 4, fontSize: '0.7rem' }}>{sortDir === 'desc' ? '↓' : '↑'}</span>}
+                                    {sortKey === key && <span style={{ marginLeft: 4, fontSize: 'var(--font-sm)' }}>{sortDir === 'desc' ? '↓' : '↑'}</span>}
                                 </th>
                             ))}
                             <th style={{ width: 50 }}></th>
@@ -279,7 +279,7 @@ export default function ManagerDashboard() {
                                 <td style={{ fontWeight: 500, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</td>
                                 <td><span style={{ color: CHANNEL_COLORS[c.channel] || '#6B7280' }}>●</span> {CHANNEL_LABELS[c.channel] || c.channel}</td>
                                 <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{c.metrics.leads.toLocaleString('vi-VN')}</td>
-                                <td style={{ textAlign: 'right', fontSize: '0.75rem' }}>{c.metrics.spend > 0 ? formatVND(c.metrics.spend) : '—'}</td>
+                                <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{c.metrics.spend > 0 ? formatVND(c.metrics.spend) : '—'}</td>
                                 <td style={{ textAlign: 'center' }}>{c.metrics.clicks > 0 ? c.metrics.clicks.toLocaleString('vi-VN') : '—'}</td>
                                 <td>
                                     <button
@@ -302,7 +302,7 @@ export default function ManagerDashboard() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                             <div>
                                 <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{detailCampaign.name}</h2>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                                <div style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)', display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
                                     <span style={{ color: CHANNEL_COLORS[detailCampaign.channel] }}>● {CHANNEL_LABELS[detailCampaign.channel]}</span>
                                     <span style={{ color: STATUS_COLORS[detailCampaign.status] }}>{detailCampaign.status}</span>
                                 </div>
@@ -311,7 +311,7 @@ export default function ManagerDashboard() {
                         </div>
 
                         {detailCampaign.startDate && (
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                            <div style={{ fontSize: 'var(--font-base)', color: 'var(--text-muted)', marginBottom: '1rem' }}>
                                 Ngày bắt đầu: {detailCampaign.startDate} {detailCampaign.endDate && `— ${detailCampaign.endDate}`}
                             </div>
                         )}
@@ -322,29 +322,29 @@ export default function ManagerDashboard() {
                             const end = detailCampaign.endDate ? new Date(detailCampaign.endDate + 'T00:00:00') : new Date();
                             const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000));
                             return (
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--bg)', padding: '0.25rem 0.6rem', borderRadius: 6, marginBottom: '1rem' }}>
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--font-sm)', color: 'var(--text-muted)', background: 'var(--bg)', padding: '0.25rem 0.6rem', borderRadius: 6, marginBottom: '1rem' }}>
                                     📅 {days} ngày {!detailCampaign.endDate && '(đang chạy)'}
                                 </div>
                             );
                         })()}
 
-                        <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                        <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
                             <IconChart size={14} /> Chỉ số
                         </h3>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <div className="kpi-card"><h3>Impressions</h3><div style={{ fontSize: '1rem', fontWeight: 600 }}>{detailCampaign.metrics.impressions.toLocaleString('vi-VN')}</div></div>
-                            <div className="kpi-card"><h3>Clicks</h3><div style={{ fontSize: '1rem', fontWeight: 600 }}>{detailCampaign.metrics.clicks.toLocaleString('vi-VN')}</div></div>
-                            <div className="kpi-card"><h3>Leads</h3><div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--primary)' }}>{detailCampaign.metrics.leads.toLocaleString('vi-VN')}</div></div>
-                            <div className="kpi-card"><h3>Conversions</h3><div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--success)' }}>{detailCampaign.metrics.conversions.toLocaleString('vi-VN')}</div></div>
-                            <div className="kpi-card"><h3><IconDollar size={14} /> Chi tiêu</h3><div style={{ fontSize: '1rem', fontWeight: 600 }}>{detailCampaign.metrics.spend > 0 ? formatVND(detailCampaign.metrics.spend) : '—'}</div></div>
+                            <div className="kpi-card"><h3>Impressions</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{detailCampaign.metrics.impressions.toLocaleString('vi-VN')}</div></div>
+                            <div className="kpi-card"><h3>Clicks</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{detailCampaign.metrics.clicks.toLocaleString('vi-VN')}</div></div>
+                            <div className="kpi-card"><h3>Leads</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--primary)' }}>{detailCampaign.metrics.leads.toLocaleString('vi-VN')}</div></div>
+                            <div className="kpi-card"><h3>Conversions</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--success)' }}>{detailCampaign.metrics.conversions.toLocaleString('vi-VN')}</div></div>
+                            <div className="kpi-card"><h3><IconDollar size={14} /> Chi tiêu</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{detailCampaign.metrics.spend > 0 ? formatVND(detailCampaign.metrics.spend) : '—'}</div></div>
                             {detailCampaign.metrics.leads > 0 && detailCampaign.metrics.spend > 0 && (
-                                <div className="kpi-card"><h3><IconTarget size={14} /> CPL</h3><div style={{ fontSize: '1rem', fontWeight: 600 }}>{formatVND(detailCampaign.metrics.spend / detailCampaign.metrics.leads)}</div></div>
+                                <div className="kpi-card"><h3><IconTarget size={14} /> CPL</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{formatVND(detailCampaign.metrics.spend / detailCampaign.metrics.leads)}</div></div>
                             )}
                             {detailCampaign.metrics.impressions > 0 && detailCampaign.metrics.clicks > 0 && (
-                                <div className="kpi-card"><h3>CTR</h3><div style={{ fontSize: '1rem', fontWeight: 600 }}>{(detailCampaign.metrics.clicks / detailCampaign.metrics.impressions * 100).toFixed(2)}%</div></div>
+                                <div className="kpi-card"><h3>CTR</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600 }}>{(detailCampaign.metrics.clicks / detailCampaign.metrics.impressions * 100).toFixed(2)}%</div></div>
                             )}
                             {detailCampaign.metrics.leads > 0 && detailCampaign.metrics.conversions > 0 && (
-                                <div className="kpi-card"><h3>Tỷ lệ chuyển đổi</h3><div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--success)' }}>{(detailCampaign.metrics.conversions / detailCampaign.metrics.leads * 100).toFixed(1)}%</div></div>
+                                <div className="kpi-card"><h3>Tỷ lệ chuyển đổi</h3><div style={{ fontSize: 'var(--font-lg)', fontWeight: 600, color: 'var(--success)' }}>{(detailCampaign.metrics.conversions / detailCampaign.metrics.leads * 100).toFixed(1)}%</div></div>
                             )}
                         </div>
                     </div>
@@ -375,12 +375,12 @@ function CreateModal({ companyId, onClose, onCreate }: { companyId: string; onCl
     return (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }} onClick={onClose}>
             <div className="card" style={{ width: '100%', maxWidth: 480, animation: 'slideUp 0.2s ease' }} onClick={e => e.stopPropagation()}>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1.5rem' }}><IconPlus size={18} /> Tạo chiến dịch mới</h2>
+                <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, marginBottom: '1.5rem' }}><IconPlus size={18} /> Tạo chiến dịch mới</h2>
 
                 <div className="form-group">
                     <label>Công ty</label>
                     <select value={coId} onChange={e => { setCoId(e.target.value); setForm({ ...form, channel: '' }); }}
-                        style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: '0.875rem' }}>
+                        style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 'var(--font-md)' }}>
                         {COMPANIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>
@@ -393,7 +393,7 @@ function CreateModal({ companyId, onClose, onCreate }: { companyId: string; onCl
                 <div className="form-group">
                     <label>Kênh</label>
                     <select value={form.channel} onChange={e => setForm({ ...form, channel: e.target.value })}
-                        style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: '0.875rem' }}>
+                        style={{ width: '100%', padding: '0.625rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text)', fontSize: 'var(--font-md)' }}>
                         <option value="">Chọn kênh</option>
                         {co && (
                             <>
