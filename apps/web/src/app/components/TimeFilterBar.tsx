@@ -105,14 +105,12 @@ export default function TimeFilterBar({
                     value={localStart}
                     onChange={v => handleDateChange(v, localEnd)}
                     placeholder="Từ ngày"
-                    compact
                 />
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>—</span>
                 <DatePicker
                     value={localEnd}
                     onChange={v => handleDateChange(localStart, v)}
                     placeholder="Đến ngày"
-                    compact
                 />
             </div>
         </div>
