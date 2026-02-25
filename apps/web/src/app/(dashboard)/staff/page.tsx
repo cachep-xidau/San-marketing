@@ -2,9 +2,11 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { COMPANIES, formatVND } from '@marketing-hub/shared';
+import { type TimeRange } from '@/lib/daily-metrics';
 import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
 import { IconUpload, IconPlus, IconCheck, IconClose, IconDownload, IconUsers, IconFilter, IconFile } from '@/app/components/icons';
+import TimeFilterBar from '@/app/components/TimeFilterBar';
 
 /* ---- Lead entry row type (mirrors the _NEW sheets) ---- */
 interface LeadEntry {
@@ -30,9 +32,12 @@ interface LeadEntry {
 }
 
 /* ---- Fetch real data from DB ---- */
-async function fetchEntries(companyId: string): Promise<LeadEntry[]> {
+async function fetchEntries(companyId: string, start?: string, end?: string): Promise<LeadEntry[]> {
     try {
-        const res = await fetch(`/api/marketing/entries?companyId=${companyId}`);
+        let url = `/api/marketing/entries?companyId=${companyId}`;
+        if (start) url += `&start=${start}`;
+        if (end) url += `&end=${end}`;
+        const res = await fetch(url);
         if (!res.ok) return [];
         const data = await res.json();
         return data.entries || [];
@@ -49,16 +54,36 @@ export default function StaffDashboard() {
     const activeCompany = COMPANIES.find(c => c.id === activeCompanyId);
 
     const [entries, setEntries] = useState<LeadEntry[]>([]);
+    const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
+
+    // Compute date range from timeRange
+    const dateRange = useMemo(() => {
+        if (timeRange === 'custom' && customStart && customEnd) {
+            return { start: customStart, end: customEnd };
+        }
+        const now = new Date('2026-02-25');
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const fmt = (d: Date) => d.toISOString().split('T')[0];
+        switch (timeRange) {
+            case 'this_month': return { start: fmt(new Date(year, month, 1)), end: fmt(new Date(year, month + 1, 0)) };
+            case 'last_month': return { start: fmt(new Date(year, month - 1, 1)), end: fmt(new Date(year, month, 0)) };
+            case '3m': return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
+            default: return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
+        }
+    }, [timeRange, customStart, customEnd]);
 
     // Fetch user session
     useEffect(() => {
         fetchSession().then(s => { if (s) setUser(s); });
     }, []);
 
-    // Fetch real entries when company changes
+    // Fetch real entries when company or date range changes
     useEffect(() => {
-        fetchEntries(activeCompanyId).then(setEntries);
-    }, [activeCompanyId]);
+        fetchEntries(activeCompanyId, dateRange.start, dateRange.end).then(setEntries);
+    }, [activeCompanyId, dateRange.start, dateRange.end]);
     const [showAddRow, setShowAddRow] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [filterChannel, setFilterChannel] = useState('all');
@@ -262,11 +287,14 @@ export default function StaffDashboard() {
                         Nhập số liệu leads hàng ngày
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-outline" onClick={() => fileInputRef.current?.click()} style={{ fontSize: '0.8rem' }}>
-                        <IconUpload size={14} /> Import CSV
-                    </button>
-                    <input ref={fileInputRef} type="file" accept=".csv" onChange={handleCSVUpload} style={{ display: 'none' }} />
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <TimeFilterBar
+                        timeRange={timeRange}
+                        onTimeRangeChange={setTimeRange}
+                        customStart={customStart}
+                        customEnd={customEnd}
+                        onCustomDateChange={(s, e) => { setCustomStart(s); setCustomEnd(e); }}
+                    />
                     <button className="btn btn-primary" onClick={() => setShowAddRow(true)} style={{ fontSize: '0.8rem' }}>
                         <IconPlus size={14} /> Thêm dòng
                     </button>

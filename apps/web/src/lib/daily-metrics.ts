@@ -9,7 +9,7 @@
 import { getCampaigns, type CampaignItem } from './campaigns';
 
 /* ---- Types ---- */
-export type TimeRange = 'this_month' | 'last_month' | '3m' | '6m';
+export type TimeRange = 'this_month' | 'last_month' | '3m' | 'custom';
 
 export interface DailyEntry {
     date: string; // YYYY-MM-DD
@@ -169,7 +169,7 @@ export function rangeToDays(range: TimeRange): number {
         case 'this_month': return 30;
         case 'last_month': return 30;
         case '3m': return 90;
-        case '6m': return 180;
+        case 'custom': return 180;
     }
 }
 
@@ -178,7 +178,7 @@ export function rangeToLabel(range: TimeRange): string {
         case 'this_month': return 'Tháng này';
         case 'last_month': return 'Tháng trước';
         case '3m': return '3 tháng';
-        case '6m': return '6 tháng';
+        case 'custom': return 'Tuỳ chọn';
     }
 }
 

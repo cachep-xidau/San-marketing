@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { CHANNEL_LABELS, CHANNEL_COLORS, formatVND } from '@marketing-hub/shared';
 import type { ChannelType } from '@marketing-hub/shared';
+import { type TimeRange } from '@/lib/daily-metrics';
 import { IconCheck, IconAlertTriangle, IconTrendUp, IconChart } from '@/app/components/icons';
+import TimeFilterBar from '@/app/components/TimeFilterBar';
 
 /* ---- Data ---- */
 interface ChannelMetrics {
@@ -19,9 +21,9 @@ interface ChannelMetrics {
     campaigns: number;
 }
 
-type TimeRange = '7d' | '30d' | '90d';
+type MockTimeRange = '7d' | '30d' | '90d';
 
-const DATA: Record<TimeRange, ChannelMetrics[]> = {
+const DATA: Record<MockTimeRange, ChannelMetrics[]> = {
     '7d': [
         { channel: 'FACEBOOK', spend: 42_000_000, leads: 230, cpl: 182_608, impressions: 185_000, clicks: 12_400, ctr: 6.7, conversions: 45, roas: 3.4, campaigns: 5 },
         { channel: 'TIKTOK', spend: 28_000_000, leads: 142, cpl: 197_183, impressions: 320_000, clicks: 18_200, ctr: 5.7, conversions: 28, roas: 2.9, campaigns: 3 },
@@ -40,7 +42,7 @@ const DATA: Record<TimeRange, ChannelMetrics[]> = {
 };
 
 /* Trend data for sparklines */
-const DAILY_LEADS: Record<TimeRange, Record<ChannelType, number[]>> = {
+const DAILY_LEADS: Record<MockTimeRange, Record<ChannelType, number[]>> = {
     '7d': {
         FACEBOOK: [28, 35, 32, 38, 30, 34, 33],
         TIKTOK: [18, 22, 20, 19, 21, 23, 19],
@@ -157,8 +159,13 @@ function DonutChart({ data, metric, label }: { data: ChannelMetrics[]; metric: k
 }
 
 export default function ComparisonPage() {
-    const [timeRange, setTimeRange] = useState<TimeRange>('30d');
-    const data = DATA[timeRange];
+    const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
+
+    // Map to mock range
+    const mockRange: MockTimeRange = timeRange === 'this_month' ? '30d' : timeRange === 'last_month' ? '30d' : timeRange === '3m' ? '90d' : '30d';
+    const data = DATA[mockRange];
     const totalSpend = data.reduce((s, d) => s + d.spend, 0);
     const totalLeads = data.reduce((s, d) => s + d.leads, 0);
     const avgCPL = totalLeads > 0 ? totalSpend / totalLeads : 0;
@@ -168,18 +175,13 @@ export default function ComparisonPage() {
         <>
             <div className="page-header">
                 <h1>So sánh kênh</h1>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {(['7d', '30d', '90d'] as TimeRange[]).map(range => (
-                        <button
-                            key={range}
-                            className={`btn ${timeRange === range ? 'btn-primary' : 'btn-outline'}`}
-                            onClick={() => setTimeRange(range)}
-                            style={{ fontSize: '0.8rem', padding: '0.375rem 0.875rem' }}
-                        >
-                            {range === '7d' ? '7 ngày' : range === '30d' ? '30 ngày' : '90 ngày'}
-                        </button>
-                    ))}
-                </div>
+                <TimeFilterBar
+                    timeRange={timeRange}
+                    onTimeRangeChange={setTimeRange}
+                    customStart={customStart}
+                    customEnd={customEnd}
+                    onCustomDateChange={(s, e) => { setCustomStart(s); setCustomEnd(e); }}
+                />
             </div>
 
             {/* Summary KPIs */}
@@ -236,7 +238,7 @@ export default function ComparisonPage() {
                                 </h3>
                                 <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{d.leads} leads</span>
                             </div>
-                            <MiniBarChart data={DAILY_LEADS[timeRange][d.channel]} color={CHANNEL_COLORS[d.channel]} width={300} height={50} />
+                            <MiniBarChart data={DAILY_LEADS[mockRange][d.channel]} color={CHANNEL_COLORS[d.channel]} width={300} height={50} />
                         </div>
                     ))}
                 </div>

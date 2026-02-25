@@ -2,12 +2,14 @@
 
 import { useState, useMemo } from 'react';
 import { COMPANIES, CHANNEL_LABELS, CHANNEL_COLORS, formatVND } from '@marketing-hub/shared';
+import { type TimeRange } from '@/lib/daily-metrics';
 import { getCampaigns, getCompanyStats } from '@/lib/campaigns';
 import { useCompany } from '../../layout';
 import { IconDownload, IconFilter, IconFile } from '@/app/components/icons';
+import TimeFilterBar from '@/app/components/TimeFilterBar';
 
-/* ---- Types ---- */
-type TimeRange = '7d' | '30d' | '3m' | '6m';
+/* ---- Types (kept for mock data compat) ---- */
+type MockTimeRange = '7d' | '30d' | '3m' | '6m';
 
 interface ReportRow {
     id: string;
@@ -25,13 +27,13 @@ interface ReportRow {
 }
 
 /* ---- Time multipliers (simulate range-based filtering) ---- */
-const RANGE_MULTIPLIER: Record<TimeRange, number> = { '7d': 0.25, '30d': 1, '3m': 2.8, '6m': 5.5 };
+const RANGE_MULTIPLIER: Record<MockTimeRange, number> = { '7d': 0.25, '30d': 1, '3m': 2.8, '6m': 5.5 };
 
 /* Previous period multipliers — slightly different to simulate real variance */
-const PREV_RANGE_MULTIPLIER: Record<TimeRange, number> = { '7d': 0.23, '30d': 0.92, '3m': 2.5, '6m': 5.0 };
+const PREV_RANGE_MULTIPLIER: Record<MockTimeRange, number> = { '7d': 0.23, '30d': 0.92, '3m': 2.5, '6m': 5.0 };
 
 /* Previous period has slightly different conversion rates */
-function buildPrevReport(companyId: string, range: TimeRange): ReportRow[] {
+function buildPrevReport(companyId: string, range: MockTimeRange): ReportRow[] {
     const campaigns = getCampaigns(companyId);
     const m = PREV_RANGE_MULTIPLIER[range];
     return campaigns.map(c => {
@@ -62,12 +64,12 @@ function buildPrevReport(companyId: string, range: TimeRange): ReportRow[] {
     });
 }
 
-function rangeLabel(r: TimeRange) {
+function rangeLabel(r: MockTimeRange) {
     return r === '7d' ? '7 ngày' : r === '30d' ? '30 ngày' : r === '3m' ? '3 tháng' : '6 tháng';
 }
 
 /* ---- Build report from campaign data ---- */
-function buildReport(companyId: string, range: TimeRange): ReportRow[] {
+function buildReport(companyId: string, range: MockTimeRange): ReportRow[] {
     const campaigns = getCampaigns(companyId);
     const m = RANGE_MULTIPLIER[range];
     return campaigns.map(c => {
@@ -131,14 +133,19 @@ export default function ReportPage() {
     const [activeCompanyId, setActiveCompanyId] = useState<string>(
         selectedCompanyId === 'all' ? 'all' : selectedCompanyId
     );
-    const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+    const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
     const [filterChannel, setFilterChannel] = useState('all');
+
+    // Map new TimeRange to old MockTimeRange for compat with mock buildReport
+    const mockRange: MockTimeRange = timeRange === 'this_month' ? '30d' : timeRange === 'last_month' ? '30d' : timeRange === '3m' ? '3m' : '6m';
 
     // Build reports per company for the selected time range
     const allReports = useMemo(() => {
         const map: Record<string, ReportRow[]> = {};
         for (const co of COMPANIES) {
-            map[co.id] = buildReport(co.id, timeRange);
+            map[co.id] = buildReport(co.id, mockRange);
         }
         return map;
     }, [timeRange]);
@@ -147,7 +154,7 @@ export default function ReportPage() {
     const prevReports = useMemo(() => {
         const map: Record<string, ReportRow[]> = {};
         for (const co of COMPANIES) {
-            map[co.id] = buildPrevReport(co.id, timeRange);
+            map[co.id] = buildPrevReport(co.id, mockRange);
         }
         return map;
     }, [timeRange]);
@@ -227,29 +234,13 @@ export default function ReportPage() {
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                    {/* Time toggle */}
-                    <div style={{ display: 'flex', gap: '0.35rem', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '0.25rem' }}>
-                        {(['7d', '30d', '3m', '6m'] as TimeRange[]).map(opt => (
-                            <button
-                                key={opt}
-                                onClick={() => setTimeRange(opt)}
-                                style={{
-                                    padding: '0.375rem 0.85rem',
-                                    borderRadius: 'var(--radius-xs)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '0.8rem',
-                                    fontWeight: timeRange === opt ? 600 : 450,
-                                    background: timeRange === opt ? 'var(--bg-card)' : 'transparent',
-                                    color: timeRange === opt ? 'var(--text)' : 'var(--text-muted)',
-                                    boxShadow: timeRange === opt ? 'var(--shadow-sm)' : 'none',
-                                    transition: 'all 0.12s ease',
-                                }}
-                            >
-                                {rangeLabel(opt)}
-                            </button>
-                        ))}
-                    </div>
+                    <TimeFilterBar
+                        timeRange={timeRange}
+                        onTimeRangeChange={setTimeRange}
+                        customStart={customStart}
+                        customEnd={customEnd}
+                        onCustomDateChange={(s, e) => { setCustomStart(s); setCustomEnd(e); }}
+                    />
                     <button className="btn btn-outline" style={{ fontSize: '0.8rem' }}>
                         <IconDownload size={14} /> Xuất Excel
                     </button>

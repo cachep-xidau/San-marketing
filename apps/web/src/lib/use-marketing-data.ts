@@ -133,7 +133,11 @@ function numOrZero(v: number | string | null | undefined): number {
  * Compute start/end date range based on month-based TimeRange.
  * Uses the data's actual latest date as reference point.
  */
-function getMonthRange(range: TimeRange): { start: string; end: string } {
+function getMonthRange(range: TimeRange, customStart?: string, customEnd?: string): { start: string; end: string } {
+    if (range === 'custom' && customStart && customEnd) {
+        return { start: customStart, end: customEnd };
+    }
+
     // Reference date: Feb 2026 (latest data)
     const now = new Date('2026-02-25');
     const year = now.getFullYear();
@@ -142,7 +146,7 @@ function getMonthRange(range: TimeRange): { start: string; end: string } {
     switch (range) {
         case 'this_month': {
             const start = new Date(year, month, 1);
-            const end = new Date(year, month + 1, 0); // last day of month
+            const end = new Date(year, month + 1, 0);
             return { start: fmt(start), end: fmt(end) };
         }
         case 'last_month': {
@@ -155,8 +159,9 @@ function getMonthRange(range: TimeRange): { start: string; end: string } {
             const end = new Date(year, month + 1, 0);
             return { start: fmt(start), end: fmt(end) };
         }
-        case '6m': {
-            const start = new Date(year, month - 5, 1);
+        default: {
+            // fallback: 3 months
+            const start = new Date(year, month - 2, 1);
             const end = new Date(year, month + 1, 0);
             return { start: fmt(start), end: fmt(end) };
         }
@@ -173,11 +178,11 @@ function toMonthLabel(dateStr: string): string {
 }
 
 /* ---- Main Hook ---- */
-export function useMarketingData(timeRange: TimeRange, activeCard: string) {
+export function useMarketingData(timeRange: TimeRange, activeCard: string, customStart?: string, customEnd?: string) {
     const [data, setData] = useState<APIResponse | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const { start, end } = getMonthRange(timeRange);
+    const { start, end } = getMonthRange(timeRange, customStart, customEnd);
 
     // Fetch filtered data from API
     useEffect(() => {

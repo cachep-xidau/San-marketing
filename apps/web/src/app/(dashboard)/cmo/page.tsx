@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { COMPANIES, CHANNEL_LABELS, CHANNEL_COLORS, formatVND } from '@marketing-hub/shared';
-import { type TimeRange, rangeToLabel } from '@/lib/daily-metrics';
+import { type TimeRange } from '@/lib/daily-metrics';
 import { useMarketingData, type DailySeriesPoint } from '@/lib/use-marketing-data';
 import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
 import { IconTarget, IconDollar, IconChart } from '@/app/components/icons';
+import TimeFilterBar from '@/app/components/TimeFilterBar';
 
 /* ---- Company Logos ---- */
 const COMPANY_LOGOS: Record<string, string> = {
@@ -15,7 +16,7 @@ const COMPANY_LOGOS: Record<string, string> = {
     tgil: '/logos/thegioiimplant.png',
 };
 
-const TIME_OPTIONS: TimeRange[] = ['this_month', 'last_month', '3m', '6m'];
+
 
 /* ====== X-Axis Label Generator ====== */
 const WEEKDAY_VN = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -241,23 +242,17 @@ export default function CMODashboard() {
     const { selectedCompanyId } = useCompany();
     const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
     const [activeCard, setActiveCard] = useState<string>('all');
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState('');
 
     // Fetch user session
     useEffect(() => {
         fetchSession().then(s => { if (s) setUser(s); });
     }, []);
 
-    const periodLabel = rangeToLabel(timeRange);
+    const { loading, selectorCards, dailySeries, channelBreakdown, totals, delta } = useMarketingData(timeRange, activeCard, customStart, customEnd);
+    const periodLabel = timeRange === 'custom' ? `${customStart} — ${customEnd}` : (timeRange === 'this_month' ? 'Tháng này' : timeRange === 'last_month' ? 'Tháng trước' : '3 tháng');
 
-    /* ---- Real DB data via hook ---- */
-    const {
-        loading,
-        selectorCards,
-        dailySeries,
-        channelBreakdown,
-        totals,
-        delta,
-    } = useMarketingData(timeRange, activeCard);
 
     const xAxisLabels = useMemo(() => getXAxisLabels(dailySeries, timeRange), [dailySeries, timeRange]);
     const avgCPL = totals.spend > 0 && totals.leads > 0 ? totals.spend / totals.leads : 0;
@@ -312,28 +307,13 @@ export default function CMODashboard() {
                         {user.name} — {activeLabel}
                     </p>}
                 </div>
-                <div style={{ display: 'flex', gap: '0.35rem', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '0.25rem' }}>
-                    {TIME_OPTIONS.map(opt => (
-                        <button
-                            key={opt}
-                            onClick={() => setTimeRange(opt)}
-                            style={{
-                                padding: '0.375rem 0.85rem',
-                                borderRadius: 'var(--radius-xs)',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem',
-                                fontWeight: timeRange === opt ? 600 : 450,
-                                background: timeRange === opt ? 'var(--bg-card)' : 'transparent',
-                                color: timeRange === opt ? 'var(--text)' : 'var(--text-muted)',
-                                boxShadow: timeRange === opt ? 'var(--shadow-sm)' : 'none',
-                                transition: 'all 0.12s ease',
-                            }}
-                        >
-                            {rangeToLabel(opt)}
-                        </button>
-                    ))}
-                </div>
+                <TimeFilterBar
+                    timeRange={timeRange}
+                    onTimeRangeChange={setTimeRange}
+                    customStart={customStart}
+                    customEnd={customEnd}
+                    onCustomDateChange={(s, e) => { setCustomStart(s); setCustomEnd(e); }}
+                />
             </div>
 
             {/* ═══ 4 Unified Selector Cards ═══ */}
