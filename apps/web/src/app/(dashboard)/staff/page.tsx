@@ -58,6 +58,7 @@ export default function StaffDashboard() {
     const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
+    const [companySummary, setCompanySummary] = useState<Record<string, { campaigns: number; leads: number }>>({}); 
 
     // Compute date range from timeRange
     const dateRange = useMemo(() => {
@@ -85,6 +86,19 @@ export default function StaffDashboard() {
     useEffect(() => {
         fetchEntries(activeCompanyId, dateRange.start, dateRange.end).then(setEntries);
     }, [activeCompanyId, dateRange.start, dateRange.end]);
+
+    // Fetch summary for ALL companies (for card metrics)
+    useEffect(() => {
+        let url = `/api/marketing?start=${dateRange.start}&end=${dateRange.end}`;
+        fetch(url).then(r => r.ok ? r.json() : null).then(data => {
+            if (!data?.summary) return;
+            const map: Record<string, { campaigns: number; leads: number }> = {};
+            for (const s of data.summary) {
+                map[s.companyId] = { campaigns: data.campaigns?.filter((c: { companyId: string }) => c.companyId === s.companyId).length || 0, leads: s._sum?.totalLead || 0 };
+            }
+            setCompanySummary(map);
+        }).catch(() => {});
+    }, [dateRange.start, dateRange.end]);
     const [showAddRow, setShowAddRow] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [filterChannel, setFilterChannel] = useState('all');
@@ -302,12 +316,8 @@ export default function StaffDashboard() {
             {/* Company selector cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 {COMPANIES.map(co => {
-                    const coEntries = entries.filter(e => {
-                        // Match company by checking if entries belong to this company's channel patterns
-                        if (activeCompanyId === co.id) return true;
-                        return false;
-                    });
                     const isActive = activeCompanyId === co.id;
+                    const summary = companySummary[co.id];
                     return (
                         <div
                             key={co.id}
@@ -338,11 +348,11 @@ export default function StaffDashboard() {
                             <div style={{ display: 'flex', gap: '1rem', fontSize: 'var(--font-sm)' }}>
                                 <div>
                                     <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-xs)' }}>Chiến dịch</div>
-                                    <div style={{ fontWeight: 700 }}>{isActive ? new Set(entries.map(e => e.campaignName)).size : '—'}</div>
+                                    <div style={{ fontWeight: 700 }}>{summary ? summary.campaigns : '—'}</div>
                                 </div>
                                 <div>
                                     <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-xs)' }}>Leads</div>
-                                    <div style={{ fontWeight: 700 }}>{isActive ? entries.reduce((s, e) => s + e.total, 0).toLocaleString('vi-VN') : '—'}</div>
+                                    <div style={{ fontWeight: 700 }}>{summary ? summary.leads.toLocaleString('vi-VN') : '—'}</div>
                                 </div>
                             </div>
                         </div>
