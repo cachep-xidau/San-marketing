@@ -3,11 +3,12 @@
 /**
  * Shared TimeFilterBar component — used across all dashboard pages.
  *
- * Displays: [Tháng này] [Tháng trước] [3 tháng] [Từ ngày — Đến ngày]
+ * Displays: [Tháng này] [Tháng trước] [3 tháng] | Từ [ngày] đến [ngày]
  */
 
 import { useState } from 'react';
 import type { TimeRange } from '@/lib/daily-metrics';
+import DatePicker from './DatePicker';
 
 const PRESET_OPTIONS: { value: TimeRange; label: string }[] = [
     { value: 'this_month', label: 'Tháng này' },
@@ -85,6 +86,36 @@ export default function TimeFilterBar({
                 </button>
             ))}
 
+            {/* Separator */}
+            <div style={{ width: 1, height: 20, background: 'var(--border, #e5e7eb)', margin: '0 0.15rem' }} />
+
+            {/* Custom date range */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.8rem',
+                padding: '0.15rem 0.25rem',
+                borderRadius: 'var(--radius-xs, 6px)',
+                background: isCustom ? 'var(--bg-card)' : 'transparent',
+                boxShadow: isCustom ? 'var(--shadow-sm)' : 'none',
+                transition: 'all 0.12s ease',
+            }}>
+                <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Từ</span>
+                <DatePicker
+                    value={localStart}
+                    onChange={v => handleDateChange(v, localEnd)}
+                    placeholder="Từ ngày"
+                    compact
+                />
+                <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>đến</span>
+                <DatePicker
+                    value={localEnd}
+                    onChange={v => handleDateChange(localStart, v)}
+                    placeholder="Đến ngày"
+                    compact
+                />
+            </div>
         </div>
     );
 }

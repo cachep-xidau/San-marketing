@@ -377,29 +377,7 @@ export default function StaffDashboard() {
                         <option key={ch.id} value={ch.id}>{ch.label}</option>
                     ))}
                 </select>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem' }}>
-                    <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Từ</span>
-                    <DatePicker
-                        value={filterStartDate}
-                        onChange={setFilterStartDate}
-                        placeholder="Từ ngày"
-                    />
-                    <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>đến</span>
-                    <DatePicker
-                        value={filterEndDate}
-                        onChange={setFilterEndDate}
-                        placeholder="Đến ngày"
-                    />
-                    {(filterStartDate || filterEndDate) && (
-                        <button
-                            className="btn btn-outline"
-                            onClick={() => { setFilterStartDate(''); setFilterEndDate(''); }}
-                            style={{ fontSize: '0.7rem', padding: '0.3rem 0.5rem' }}
-                        >
-                            <IconClose size={10} /> Xóa
-                        </button>
-                    )}
-                </div>
+
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                     {filteredEntries.length} dòng
                 </span>
