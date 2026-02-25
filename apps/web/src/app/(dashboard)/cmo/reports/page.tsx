@@ -1,16 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { COMPANIES, CHANNEL_LABELS, CHANNEL_COLORS, formatVND } from '@marketing-hub/shared';
 import { type TimeRange } from '@/lib/daily-metrics';
-import { getCampaigns, getCompanyStats } from '@/lib/campaigns';
 import { useCompany } from '../../layout';
 import { IconDownload, IconFilter, IconFile } from '@/app/components/icons';
 import TimeFilterBar from '@/app/components/TimeFilterBar';
 
-/* ---- Types (kept for mock data compat) ---- */
-type MockTimeRange = '7d' | '30d' | '3m' | '6m';
-
+/* ---- Types ---- */
 interface ReportRow {
     id: string;
     channel: string;
@@ -26,79 +23,77 @@ interface ReportRow {
     budgetActual: number;
 }
 
-/* ---- Time multipliers (simulate range-based filtering) ---- */
-const RANGE_MULTIPLIER: Record<MockTimeRange, number> = { '7d': 0.25, '30d': 1, '3m': 2.8, '6m': 5.5 };
-
-/* Previous period multipliers — slightly different to simulate real variance */
-const PREV_RANGE_MULTIPLIER: Record<MockTimeRange, number> = { '7d': 0.23, '30d': 0.92, '3m': 2.5, '6m': 5.0 };
-
-/* Previous period has slightly different conversion rates */
-function buildPrevReport(companyId: string, range: MockTimeRange): ReportRow[] {
-    const campaigns = getCampaigns(companyId);
-    const m = PREV_RANGE_MULTIPLIER[range];
-    return campaigns.map(c => {
-        const leads = Math.round(c.metrics.leads * m);
-        const spam = Math.floor(leads * 0.13); // slightly worse spam
-        const potential = leads - spam;
-        const quality = Math.floor(potential * 0.55); // slightly different rates
-        const booked = Math.floor(quality * 0.70);
-        const arrived = Math.floor(booked * 0.76);
-        const closed = Math.floor(arrived * 0.50);
-        const seed = c.id.split('').reduce((a, ch) => a + ch.charCodeAt(0), 0);
-        const bill = closed * ((seed * 7 % 15_000_000) + 8_000_000);
-
-        return {
-            id: c.id,
-            channel: c.channel,
-            campaignName: c.name,
-            totalLead: leads,
-            spam,
-            potential,
-            quality,
-            booked,
-            arrived,
-            closed,
-            bill,
-            budgetActual: Math.round(c.metrics.spend * m),
-        };
-    });
+/* ---- API response types ---- */
+interface APISummary {
+    companyId: string;
+    _sum: {
+        totalLead: number | null;
+        spam: number | null;
+        potential: number | null;
+        quality: number | null;
+        booked: number | null;
+        arrived: number | null;
+        closed: number | null;
+        bill: string | null;
+        budgetTarget: string | null;
+        budgetActual: string | null;
+    };
+    _count: number;
 }
 
-function rangeLabel(r: MockTimeRange) {
-    return r === '7d' ? '7 ngày' : r === '30d' ? '30 ngày' : r === '3m' ? '3 tháng' : '6 tháng';
+interface APICampaign {
+    companyId: string;
+    channel: string;
+    campaignName: string;
+    _sum: {
+        totalLead: number | null;
+        spam: number | null;
+        potential: number | null;
+        quality: number | null;
+        booked: number | null;
+        arrived: number | null;
+        closed: number | null;
+        bill: string | null;
+        budgetTarget: string | null;
+        budgetActual: string | null;
+    };
+    _count: number;
 }
 
-/* ---- Build report from campaign data ---- */
-function buildReport(companyId: string, range: MockTimeRange): ReportRow[] {
-    const campaigns = getCampaigns(companyId);
-    const m = RANGE_MULTIPLIER[range];
-    return campaigns.map(c => {
-        const leads = Math.round(c.metrics.leads * m);
-        const spam = Math.floor(leads * 0.12);
-        const potential = leads - spam;
-        const quality = Math.floor(potential * 0.58);
-        const booked = Math.floor(quality * 0.72);
-        const arrived = Math.floor(booked * 0.78);
-        const closed = Math.floor(arrived * 0.52);
-        // Deterministic "random" based on campaign id to avoid SSR hydration mismatch
-        const seed = c.id.split('').reduce((a, ch) => a + ch.charCodeAt(0), 0);
-        const bill = closed * ((seed * 7 % 15_000_000) + 8_000_000);
+interface APIMasterStatus {
+    companyId: string;
+    status: string;
+    _count: number;
+}
 
-        return {
-            id: c.id,
-            channel: c.channel,
-            campaignName: c.name,
-            totalLead: leads,
-            spam,
-            potential,
-            quality,
-            booked,
-            arrived,
-            closed,
-            bill,
-            budgetActual: Math.round(c.metrics.spend * m),
-        };
-    });
+interface APIResponse {
+    summary: APISummary[];
+    campaigns: APICampaign[];
+    masterStatus: APIMasterStatus[];
+}
+
+/* ---- Helpers ---- */
+function numOrZero(v: number | string | null | undefined): number {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === 'string') return parseFloat(v) || 0;
+    return v;
+}
+
+function getDateRange(range: TimeRange, customStart?: string, customEnd?: string): { start: string; end: string } {
+    if (range === 'custom' && customStart && customEnd) {
+        return { start: customStart, end: customEnd };
+    }
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+    switch (range) {
+        case 'this_month': return { start: fmt(new Date(year, month, 1)), end: fmt(new Date(year, month + 1, 0)) };
+        case 'last_month': return { start: fmt(new Date(year, month - 1, 1)), end: fmt(new Date(year, month, 0)) };
+        case '3m': return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
+        default: return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
+    }
 }
 
 /* ---- Funnel Stage Definition ---- */
@@ -138,26 +133,47 @@ export default function ReportPage() {
     const [customEnd, setCustomEnd] = useState('');
     const [filterChannel, setFilterChannel] = useState('all');
 
-    // Map new TimeRange to old MockTimeRange for compat with mock buildReport
-    const mockRange: MockTimeRange = timeRange === 'this_month' ? '30d' : timeRange === 'last_month' ? '30d' : timeRange === '3m' ? '3m' : '6m';
+    // Real data from API
+    const [apiData, setApiData] = useState<APIResponse | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    // Build reports per company for the selected time range
+    const { start, end } = getDateRange(timeRange, customStart, customEnd);
+
+    // Fetch real data from DB
+    useEffect(() => {
+        setLoading(true);
+        fetch(`/api/marketing?start=${start}&end=${end}`)
+            .then(r => r.ok ? r.json() : null)
+            .then((data: APIResponse | null) => {
+                if (data) setApiData(data);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [start, end]);
+
+    // Transform API campaigns → ReportRow[] per company
     const allReports = useMemo(() => {
+        if (!apiData?.campaigns) return {} as Record<string, ReportRow[]>;
         const map: Record<string, ReportRow[]> = {};
         for (const co of COMPANIES) {
-            map[co.id] = buildReport(co.id, mockRange);
+            const coCampaigns = apiData.campaigns.filter(c => c.companyId === co.id);
+            map[co.id] = coCampaigns.map((c, i) => ({
+                id: `${co.id}-${i}`,
+                channel: c.channel,
+                campaignName: c.campaignName,
+                totalLead: numOrZero(c._sum.totalLead),
+                spam: numOrZero(c._sum.spam),
+                potential: numOrZero(c._sum.potential),
+                quality: numOrZero(c._sum.quality),
+                booked: numOrZero(c._sum.booked),
+                arrived: numOrZero(c._sum.arrived),
+                closed: numOrZero(c._sum.closed),
+                bill: numOrZero(c._sum.bill),
+                budgetActual: numOrZero(c._sum.budgetActual),
+            }));
         }
         return map;
-    }, [timeRange]);
-
-    // Build PREVIOUS period reports for comparison
-    const prevReports = useMemo(() => {
-        const map: Record<string, ReportRow[]> = {};
-        for (const co of COMPANIES) {
-            map[co.id] = buildPrevReport(co.id, mockRange);
-        }
-        return map;
-    }, [timeRange]);
+    }, [apiData]);
 
     // Aggregated "Tổng công ty" = all companies combined
     const allCompanyRows = useMemo(() => {
@@ -181,24 +197,17 @@ export default function ReportPage() {
 
     const totals = useMemo(() => companyTotals(currentRows), [currentRows]);
 
-    // Previous period totals for funnel comparison
-    const prevAllCompanyRows = useMemo(() => COMPANIES.flatMap(co => prevReports[co.id] || []), [prevReports]);
-    const prevCurrentRows = useMemo(() => {
-        let rows = activeCompanyId === 'all' ? prevAllCompanyRows : (prevReports[activeCompanyId] || []);
-        if (filterChannel !== 'all') rows = rows.filter(r => r.channel === filterChannel);
-        return rows;
-    }, [prevReports, prevAllCompanyRows, activeCompanyId, filterChannel]);
-    const prevTotals = useMemo(() => companyTotals(prevCurrentRows), [prevCurrentRows]);
-
     // Active company info
     const activeCompanyObj = activeCompanyId === 'all' ? null : COMPANIES.find(c => c.id === activeCompanyId);
     const activeColor = activeCompanyObj?.color || '#6B6F76';
     const activeLabel = activeCompanyObj?.shortName?.toUpperCase() || 'TỔNG CÔNG TY';
 
-    // Build selector cards data
+    // Build selector cards data from real API
     const selectorCards = useMemo(() => {
         const allTotals = companyTotals(allCompanyRows);
-        const allStats = getCampaigns();
+        const ms = apiData?.masterStatus || [];
+        const allCampaignCount = new Set(allCompanyRows.map(r => r.campaignName)).size;
+
         return [
             {
                 id: 'all',
@@ -206,22 +215,23 @@ export default function ReportPage() {
                 shortName: '∑',
                 color: '#6B6F76',
                 totals: allTotals,
-                campaigns: allStats.length,
+                campaigns: allCampaignCount,
             },
             ...COMPANIES.map(co => {
-                const t = companyTotals(allReports[co.id] || []);
-                const stats = getCompanyStats(co.id);
+                const coRows = allReports[co.id] || [];
+                const t = companyTotals(coRows);
+                const campaignCount = new Set(coRows.map(r => r.campaignName)).size;
                 return {
                     id: co.id,
                     label: co.name,
                     shortName: co.shortName.charAt(0),
                     color: co.color,
                     totals: t,
-                    campaigns: stats.total,
+                    campaigns: campaignCount,
                 };
             }),
         ];
-    }, [allReports, allCompanyRows]);
+    }, [allReports, allCompanyRows, apiData]);
 
     return (
         <>
@@ -288,7 +298,7 @@ export default function ReportPage() {
                                 )}
                             </div>
 
-                            {/* Metrics: 2×2 grid — Lead, Chốt, Tỷ lệ chốt, Doanh thu */}
+                            {/* Metrics: 2×2 grid — Lead, Chốt, Tỷ lệ chốt, Chiến dịch */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 0.25rem' }}>
                                 <div>
                                     <div style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Leads</div>
@@ -323,10 +333,7 @@ export default function ReportPage() {
                 {/* Stage labels + numbers */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.25rem', marginBottom: '0.75rem' }}>
                     {FUNNEL_STAGES.map((stage, i) => {
-                        const val = stage.key === 'bill'
-                            ? (totals as Record<string, number>)[stage.key] || 0
-                            : (totals as Record<string, number>)[stage.key] || 0;
-                        const pctTotal = totals.totalLead > 0 ? (val / totals.totalLead * 100) : 0;
+                        const val = (totals as Record<string, number>)[stage.key] || 0;
                         const prevKey = i > 0 ? FUNNEL_STAGES[i - 1].key : null;
                         const prevVal = prevKey ? (totals as Record<string, number>)[prevKey] || 0 : 0;
                         const pctStep = i === 0 ? 100 : (prevVal > 0 ? (val / prevVal * 100) : 0);
@@ -339,33 +346,16 @@ export default function ReportPage() {
                                 <div style={{ fontSize: 'var(--font-xl)', fontWeight: 700, color: stage.color, lineHeight: 1.2 }}>
                                     {stage.key === 'bill' ? formatVND(val) : val.toLocaleString('vi-VN')}
                                 </div>
-                                {/* Percentage labels with period comparison */}
                                 <div style={{ fontSize: 'var(--font-xs)', marginTop: '0.2rem' }}>
                                     {i === 0 ? (
                                         <span style={{ color: 'var(--text-muted)' }}>100%</span>
                                     ) : stage.key === 'bill' ? (
                                         <span style={{ color: 'var(--text-muted)' }}>—</span>
-                                    ) : (() => {
-                                        // Previous period step rate
-                                        const prevStageVal = (prevTotals as Record<string, number>)[stage.key] || 0;
-                                        const prevPrevVal = prevKey ? (prevTotals as Record<string, number>)[prevKey] || 0 : 0;
-                                        const prevPctStep = prevPrevVal > 0 ? (prevStageVal / prevPrevVal * 100) : 0;
-                                        const isImproved = pctStep >= prevPctStep;
-                                        return (
-                                            <>
-                                                <span style={{
-                                                    fontWeight: 600,
-                                                    color: isImproved ? 'var(--success)' : 'var(--danger)',
-                                                }}>
-                                                    {pctStep.toFixed(1)}%
-                                                </span>
-                                                <br />
-                                                <span style={{ color: 'var(--text-muted)' }}>
-                                                    kỳ trước {prevPctStep.toFixed(1)}%
-                                                </span>
-                                            </>
-                                        );
-                                    })()}
+                                    ) : (
+                                        <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
+                                            {pctStep.toFixed(1)}%
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -402,8 +392,6 @@ export default function ReportPage() {
                 {/* Legend */}
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
                     <span>◆ <strong>X%</strong> = tỷ lệ chuyển đổi so với bước trước</span>
-                    <span>◆ <span style={{ color: 'var(--success)' }}>xanh</span> = cao hơn kỳ trước</span>
-                    <span>◆ <span style={{ color: 'var(--danger)' }}>đỏ</span> = thấp hơn kỳ trước</span>
                 </div>
             </div>
 

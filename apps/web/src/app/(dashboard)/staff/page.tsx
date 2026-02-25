@@ -94,7 +94,9 @@ export default function StaffDashboard() {
             if (!data?.summary) return;
             const map: Record<string, { campaigns: number; leads: number }> = {};
             for (const s of data.summary) {
-                map[s.companyId] = { campaigns: data.campaigns?.filter((c: { companyId: string }) => c.companyId === s.companyId).length || 0, leads: s._sum?.totalLead || 0 };
+                const coCampaigns = data.campaigns?.filter((c: { companyId: string }) => c.companyId === s.companyId) || [];
+                const uniqueNames = new Set(coCampaigns.map((c: { campaignName: string }) => c.campaignName));
+                map[s.companyId] = { campaigns: uniqueNames.size, leads: s._sum?.totalLead || 0 };
             }
             setCompanySummary(map);
         }).catch(() => { });
