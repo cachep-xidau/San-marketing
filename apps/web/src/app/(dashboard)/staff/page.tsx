@@ -102,7 +102,13 @@ export default function StaffDashboard() {
         }
         return Array.from(seen.values());
     }, [entries]);
-    const channels = activeCompany?.channels || [];
+
+    // Derive channel list from actual data (DB stores raw strings)
+    const channels = useMemo(() => {
+        const set = new Set<string>();
+        entries.forEach(e => { if (e.channel) set.add(e.channel); });
+        return Array.from(set).sort();
+    }, [entries]);
 
     // Parse dd/mm/yyyy to Date for comparison
     const parseDMY = (s: string): Date | null => {
@@ -374,7 +380,7 @@ export default function StaffDashboard() {
                 >
                     <option value="all">Tất cả kênh</option>
                     {channels.map(ch => (
-                        <option key={ch.id} value={ch.id}>{ch.label}</option>
+                        <option key={ch} value={ch}>{ch}</option>
                     ))}
                 </select>
 
