@@ -89,24 +89,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <span className="sidebar-toggle-label">Menu</span>
                 </button>
 
-                {/* Company Switcher */}
-                <div className="sidebar-company-select">
-                    <select
-                        value={selectedCompanyId}
-                        onChange={e => setSelectedCompanyId(e.target.value)}
-                        style={{
-                            width: '100%', padding: '0.5rem 0.75rem',
-                            background: 'var(--bg-card)', border: '1px solid var(--border)',
-                            borderRadius: 'var(--radius-sm)', color: 'var(--text)',
-                            fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
-                        }}
-                    >
-                        <option value="all">📊 Tất cả công ty</option>
-                        {COMPANIES.map(c => (
-                            <option key={c.id} value={c.id}>● {c.name}</option>
-                        ))}
-                    </select>
-                </div>
 
                 <nav style={{ flex: 1 }}>
                     <ul className="sidebar-nav">
