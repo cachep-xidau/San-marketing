@@ -23,12 +23,12 @@ export function useCompany() { return useContext(CompanyContext); }
 
 const NAV_ITEMS: { href: string; label: string; icon: ReactNode; roles: string[] }[] = [
     { href: '/cmo', label: 'Tổng quan', icon: <IconHome size={18} />, roles: ['CMO', 'HEAD'] },
-    { href: '/manager', label: 'Chiến dịch', icon: <IconCampaign size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
+    { href: '/cmo/reports', label: 'Báo cáo', icon: <IconReport size={18} />, roles: ['CMO', 'HEAD'] },
     { href: '/staff', label: 'Nhập liệu', icon: <IconUpload size={18} />, roles: ['CMO', 'HEAD', 'MANAGER', 'STAFF'] },
     { href: '/cmo/comparison', label: 'So sánh kênh', icon: <IconComparison size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
     { href: '/google-ads', label: 'Google Ads', icon: <IconGoogleAds size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
-    { href: '/cmo/reports', label: 'Báo cáo', icon: <IconReport size={18} />, roles: ['CMO', 'HEAD'] },
     { href: '/cmo/alerts', label: 'Cảnh báo', icon: <IconBell size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
+    { href: '/manager', label: 'Chiến dịch', icon: <IconCampaign size={18} />, roles: ['CMO', 'HEAD', 'MANAGER'] },
     { href: '/settings', label: 'Cài đặt', icon: <IconSettingsGear size={18} />, roles: ['CMO', 'HEAD', 'MANAGER', 'STAFF'] },
 ];
 
