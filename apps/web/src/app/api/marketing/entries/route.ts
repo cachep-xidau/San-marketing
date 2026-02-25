@@ -72,7 +72,9 @@ export async function GET(request: Request) {
             };
         });
 
-        return NextResponse.json({ entries: rows, total: rows.length });
+        return NextResponse.json({ entries: rows, total: rows.length }, {
+            headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
+        });
     } catch (error) {
         console.error('Marketing entries API error:', error);
         return NextResponse.json({ error: 'Failed to fetch entries' }, { status: 500 });

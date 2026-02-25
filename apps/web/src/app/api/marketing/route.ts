@@ -4,6 +4,14 @@ import { prisma } from '@/lib/prisma';
 const VALID_COMPANIES = ['san', 'teennie', 'tgil'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/* ---- In-memory cache (5 min TTL) ---- */
+const cache = new Map<string, { data: object; ts: number }>();
+const CACHE_TTL = 5 * 60 * 1000;
+
+const CACHE_HEADERS = {
+    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+};
+
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('companyId') || undefined;
@@ -28,6 +36,13 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'start must be ≤ end' }, { status: 400 });
     }
 
+    // Check cache
+    const cacheKey = `${companyId || 'all'}:${startDate || ''}:${endDate || ''}`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+        return NextResponse.json(cached.data, { headers: CACHE_HEADERS });
+    }
+
     const where: Record<string, unknown> = {};
 
     if (companyId) {
@@ -40,87 +55,62 @@ export async function GET(request: Request) {
         if (endDate) (where.date as Record<string, unknown>).lte = new Date(endDate);
     }
 
+    const sumFields = {
+        totalLead: true, spam: true, potential: true, quality: true,
+        booked: true, arrived: true, closed: true, bill: true,
+        budgetTarget: true, budgetActual: true,
+    } as const;
+
     try {
-        // Aggregated summary by company
-        const summary = await prisma.marketingEntry.groupBy({
-            by: ['companyId'],
-            where,
-            _sum: {
-                totalLead: true,
-                spam: true,
-                potential: true,
-                quality: true,
-                booked: true,
-                arrived: true,
-                closed: true,
-                bill: true,
-                budgetTarget: true,
-                budgetActual: true,
-            },
-            _count: true,
-        });
+        // All 5 queries run in PARALLEL
+        const [summary, daily, campaigns, channels, masterStatus] = await Promise.all([
+            // 1. Aggregated summary by company
+            prisma.marketingEntry.groupBy({
+                by: ['companyId'],
+                where,
+                _sum: sumFields,
+                _count: true,
+            }),
 
-        // Daily aggregation
-        const daily = await prisma.marketingEntry.groupBy({
-            by: ['date', 'companyId'],
-            where,
-            _sum: {
-                totalLead: true,
-                spam: true,
-                potential: true,
-                quality: true,
-                booked: true,
-                arrived: true,
-                closed: true,
-                bill: true,
-                budgetActual: true,
-            },
-            orderBy: { date: 'asc' },
-        });
+            // 2. Daily aggregation
+            prisma.marketingEntry.groupBy({
+                by: ['date', 'companyId'],
+                where,
+                _sum: {
+                    totalLead: true, spam: true, potential: true, quality: true,
+                    booked: true, arrived: true, closed: true, bill: true,
+                    budgetActual: true,
+                },
+                orderBy: { date: 'asc' },
+            }),
 
-        // Campaign breakdown
-        const campaigns = await prisma.marketingEntry.groupBy({
-            by: ['companyId', 'channel', 'campaignName'],
-            where,
-            _sum: {
-                totalLead: true,
-                spam: true,
-                potential: true,
-                quality: true,
-                booked: true,
-                arrived: true,
-                closed: true,
-                bill: true,
-                budgetTarget: true,
-                budgetActual: true,
-            },
-            _count: true,
-        });
+            // 3. Campaign breakdown
+            prisma.marketingEntry.groupBy({
+                by: ['companyId', 'channel', 'campaignName'],
+                where,
+                _sum: sumFields,
+                _count: true,
+            }),
 
-        // Channel breakdown
-        const channels = await prisma.marketingEntry.groupBy({
-            by: ['companyId', 'channel'],
-            where,
-            _sum: {
-                totalLead: true,
-                spam: true,
-                potential: true,
-                quality: true,
-                booked: true,
-                arrived: true,
-                closed: true,
-                bill: true,
-                budgetActual: true,
-            },
-        });
+            // 4. Channel breakdown
+            prisma.marketingEntry.groupBy({
+                by: ['companyId', 'channel'],
+                where,
+                _sum: {
+                    totalLead: true, spam: true, potential: true, quality: true,
+                    booked: true, arrived: true, closed: true, bill: true,
+                    budgetActual: true,
+                },
+            }),
 
-        // Campaign master status (BẬT/TẮT)
-        const masterStatus = await prisma.campaignMaster.groupBy({
-            by: ['companyId', 'status'],
-            _count: true,
-        });
+            // 5. Campaign master status (BẬT/TẮT)
+            prisma.campaignMaster.groupBy({
+                by: ['companyId', 'status'],
+                _count: true,
+            }),
+        ]);
 
-        return NextResponse.json({
+        const result = {
             summary,
             daily,
             campaigns,
@@ -133,7 +123,12 @@ export async function GET(request: Request) {
                     end: daily[daily.length - 1]?.date,
                 },
             },
-        });
+        };
+
+        // Store in cache
+        cache.set(cacheKey, { data: result, ts: Date.now() });
+
+        return NextResponse.json(result, { headers: CACHE_HEADERS });
     } catch (error) {
         console.error('Marketing data API error:', error);
         return NextResponse.json(
