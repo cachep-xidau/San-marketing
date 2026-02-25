@@ -273,3 +273,32 @@ model SyncLog {
   startedAt        DateTime @default(now())
   completedAt      DateTime?
 }
+
+// === MARKETING FUNNEL DATA (from Google Sheets) ===
+
+model MarketingEntry {
+  id             String   @id @default(cuid())
+  companyId      String   // 'san', 'teennie', 'tgil'
+  date           DateTime @db.Date
+  month          String   // '03.2025'
+  campaignId     Int      // ID from sheet
+  channel        String   // 'Page', '2 PAGE TEENNIE', '3 PAGE TGIL', etc.
+  campaignName   String
+  totalLead      Int      @default(0)
+  spam           Int      @default(0)
+  potential       Int      @default(0) // TIỀM NĂNG
+  quality        Int      @default(0) // CHẤT LƯỢNG
+  booked         Int      @default(0) // ĐẶT HẸN
+  arrived        Int      @default(0) // ĐẾN PK
+  closed         Int      @default(0) // CHỐT
+  bill           Decimal  @default(0) @db.Decimal(15, 2) // BILL
+  budgetTarget   Decimal  @default(0) @db.Decimal(15, 2) // Ngân sách mục tiêu
+  budgetActual   Decimal  @default(0) @db.Decimal(15, 2) // Ngân sách thực tế
+  kpi            Decimal? @db.Decimal(10, 4)
+  createdAt      DateTime @default(now())
+
+  @@index([companyId])
+  @@index([date])
+  @@index([companyId, date])
+  @@index([channel])
+}
