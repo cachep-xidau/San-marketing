@@ -91,22 +91,7 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                <div style={{
-                    marginTop: '1.5rem',
-                    padding: '1rem',
-                    background: 'rgba(99, 102, 241, 0.08)',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.8rem',
-                    color: 'var(--text-muted)',
-                }}>
-                    <strong style={{ color: 'var(--primary)' }}>Demo accounts:</strong>
-                    <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.25rem' }}>
-                        <div>CMO: <code>cmo@sgroup.vn</code></div>
-                        <div>Manager: <code>manager@sgroup.vn</code></div>
-                        <div>Staff: <code>staff@sgroup.vn</code></div>
-                        <div style={{ marginTop: '0.25rem', opacity: 0.7 }}>Password: <code>demo</code></div>
-                    </div>
-                </div>
+
             </div>
         </div>
     );
