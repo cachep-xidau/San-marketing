@@ -8,7 +8,6 @@
 
 import { useState } from 'react';
 import type { TimeRange } from '@/lib/daily-metrics';
-import DatePicker from './DatePicker';
 
 const PRESET_OPTIONS: { value: TimeRange; label: string }[] = [
     { value: 'this_month', label: 'Tháng này' },
@@ -86,39 +85,6 @@ export default function TimeFilterBar({
                 </button>
             ))}
 
-            {/* Date picker separator */}
-            <div style={{
-                width: 1,
-                height: 20,
-                background: 'var(--border, #e5e7eb)',
-                margin: '0 0.25rem',
-            }} />
-
-            {/* Custom date range */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.2rem',
-                padding: '0.15rem 0.25rem',
-                borderRadius: 'var(--radius-xs, 6px)',
-                background: isCustom ? 'var(--bg-card)' : 'transparent',
-                boxShadow: isCustom ? 'var(--shadow-sm)' : 'none',
-                transition: 'all 0.12s ease',
-            }}>
-                <DatePicker
-                    value={localStart}
-                    onChange={v => handleDateChange(v, localEnd)}
-                    placeholder="Từ ngày"
-                    compact
-                />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>—</span>
-                <DatePicker
-                    value={localEnd}
-                    onChange={v => handleDateChange(localStart, v)}
-                    placeholder="Đến ngày"
-                    compact
-                />
-            </div>
         </div>
     );
 }
