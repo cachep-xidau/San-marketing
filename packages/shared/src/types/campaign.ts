@@ -123,20 +123,68 @@ export interface GoalSummary {
 }
 
 /* ---- Legacy CHANNEL_ maps (kept for pages not yet refactored) ---- */
+/* Keys include BOTH normalized IDs (page_san) and raw DB strings (Page, 2 PAGE TEENNIE) */
 export const CHANNEL_LABELS: Record<string, string> = {
+    // Normalized IDs
     page_san: 'Page San', page_teennie: 'Page Teennie', page_tgil: 'Page TGIL',
     web: 'Web', zalo_oa: 'Zalo OA', instagram: 'Instagram', tiktok: 'TikTok',
     hotline: 'Hotline', gioi_thieu: 'Giới thiệu', vang_lai: 'Vãng lai',
     doi_tac: 'Đối tác', data_truong: 'Data trường', khac: 'Khác',
     tu_van_lai: 'Tư Vấn Lại',
     FACEBOOK: 'Facebook Ads', TIKTOK: 'TikTok Ads', ZALO: 'Zalo OA/Ads', CRM: 'CRM',
+    // Raw DB string values (from Google Sheet import)
+    'Page': 'Page San',
+    '2 PAGE TEENNIE': 'Page Teennie',
+    '3 PAGE TGIL': 'Page TGIL',
+    'Web': 'Web',
+    'Zalo OA': 'Zalo OA',
+    'Instagram': 'Instagram',
+    'TikTok': 'TikTok',
+    'Tiktok': 'TikTok',
+    'Hotline': 'Hotline',
+    'Giới Thiệu': 'Giới thiệu',
+    'Giới thiệu': 'Giới thiệu',
+    'Vãng Lai': 'Vãng lai',
+    'Vãng lai': 'Vãng lai',
+    'Đối Tác': 'Đối tác',
+    'Đối tác': 'Đối tác',
+    'Data Trường': 'Data trường',
+    'Data trường': 'Data trường',
+    'Khác': 'Khác',
+    'Tư Vấn Lại': 'Tư Vấn Lại',
+    'Facebook': 'Facebook',
+    'Google': 'Google Ads',
 };
 
 export const CHANNEL_COLORS: Record<string, string> = {
-    page_san: '#1877F2', page_teennie: '#1877F2', page_tgil: '#1877F2',
-    web: '#10B981', zalo_oa: '#0068FF', instagram: '#E1306C', tiktok: '#000000',
+    // Normalized IDs
+    page_san: '#1877F2', page_teennie: '#E91E90', page_tgil: '#F59E0B',
+    web: '#10B981', zalo_oa: '#0068FF', instagram: '#E1306C', tiktok: '#010101',
     hotline: '#F59E0B', gioi_thieu: '#8B5CF6', vang_lai: '#EC4899',
     doi_tac: '#14B8A6', data_truong: '#F97316', khac: '#6B7280',
     tu_van_lai: '#7C3AED',
-    FACEBOOK: '#1877F2', TIKTOK: '#000000', ZALO: '#0068FF', CRM: '#10B981',
+    FACEBOOK: '#1877F2', TIKTOK: '#010101', ZALO: '#0068FF', CRM: '#10B981',
+    // Raw DB string values (from Google Sheet import)
+    'Page': '#1877F2',
+    '2 PAGE TEENNIE': '#E91E90',
+    '3 PAGE TGIL': '#F59E0B',
+    'Web': '#10B981',
+    'Zalo OA': '#0068FF',
+    'Instagram': '#E1306C',
+    'TikTok': '#010101',
+    'Tiktok': '#010101',
+    'Hotline': '#EAB308',
+    'Giới Thiệu': '#8B5CF6',
+    'Giới thiệu': '#8B5CF6',
+    'Vãng Lai': '#EC4899',
+    'Vãng lai': '#EC4899',
+    'Đối Tác': '#14B8A6',
+    'Đối tác': '#14B8A6',
+    'Data Trường': '#F97316',
+    'Data trường': '#F97316',
+    'Khác': '#6B7280',
+    'Tư Vấn Lại': '#7C3AED',
+    'Facebook': '#1877F2',
+    'Google': '#4285F4',
 };
+
