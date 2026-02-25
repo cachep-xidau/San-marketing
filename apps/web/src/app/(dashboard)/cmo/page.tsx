@@ -2,19 +2,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { COMPANIES, CHANNEL_LABELS, CHANNEL_COLORS, formatVND } from '@marketing-hub/shared';
-import { getCampaigns, getCompanyStats } from '@/lib/campaigns';
-import {
-    type TimeRange,
-    rangeToLabel,
-    getRangeDates,
-    getComparison,
-    getCompanyComparison,
-    getCompanyMetricsForRange,
-    getAllMetricsForRange,
-    getChannelBreakdownForRange,
-    getDailySeries,
-    type DailySeriesPoint,
-} from '@/lib/daily-metrics';
+import { type TimeRange, rangeToLabel } from '@/lib/daily-metrics';
+import { useMarketingData, type DailySeriesPoint } from '@/lib/use-marketing-data';
 import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
 import { IconTarget, IconDollar, IconChart } from '@/app/components/icons';
@@ -302,71 +291,19 @@ export default function CMODashboard() {
     }, []);
 
     const periodLabel = rangeToLabel(timeRange);
-    const { start, end } = getRangeDates(timeRange);
 
-    /* ---- Selector card data ---- */
-    const selectorCards = useMemo(() => {
-        const allMetrics = getAllMetricsForRange(start, end);
-        const allComparison = getComparison(undefined, timeRange);
-        const allStats = getCampaigns();
-
-        return [
-            {
-                id: 'all',
-                label: 'Tổng công ty',
-                color: '#6B6F76',
-                initial: '∑',
-                metrics: allMetrics,
-                delta: allComparison.delta,
-                campaigns: allStats.length,
-                active: allStats.filter(c => c.status === 'BẬT').length,
-            },
-            ...COMPANIES.map(co => {
-                const m = getCompanyMetricsForRange(co.id, start, end);
-                const comp = getCompanyComparison(co.id, timeRange);
-                const stats = getCompanyStats(co.id);
-                return {
-                    id: co.id,
-                    label: co.name,
-                    color: co.color,
-                    initial: co.shortName.charAt(0),
-                    metrics: m,
-                    delta: comp.delta,
-                    campaigns: stats.total,
-                    active: stats.active,
-                };
-            }),
-        ];
-    }, [timeRange]);
-
-    /* ---- Daily series for sparklines ---- */
-    const dailySeries = useMemo(() => {
-        return getDailySeries(
-            activeCard === 'all' ? undefined : activeCard,
-            start,
-            end,
-        );
-    }, [activeCard, timeRange]);
+    /* ---- Real DB data via hook ---- */
+    const {
+        loading,
+        selectorCards,
+        dailySeries,
+        channelBreakdown,
+        totals,
+        delta,
+    } = useMarketingData(timeRange, activeCard);
 
     const xAxisLabels = useMemo(() => getXAxisLabels(dailySeries, timeRange), [dailySeries, timeRange]);
-
-    /* ---- Effective comparison for active card ---- */
-    const effectiveComparison = useMemo(() => {
-        if (activeCard === 'all') return getComparison(undefined, timeRange);
-        return getComparison(activeCard, timeRange);
-    }, [activeCard, timeRange]);
-
-    const { current: totals, delta } = effectiveComparison;
     const avgCPL = totals.spend > 0 && totals.leads > 0 ? totals.spend / totals.leads : 0;
-
-    /* ---- Channel breakdown ---- */
-    const channelBreakdown = useMemo(() => {
-        return getChannelBreakdownForRange(
-            activeCard === 'all' ? undefined : activeCard,
-            start,
-            end,
-        );
-    }, [activeCard, timeRange]);
 
     const channelTotals = useMemo(() => ({
         leads: channelBreakdown.reduce((s, c) => s + c.leads, 0),
