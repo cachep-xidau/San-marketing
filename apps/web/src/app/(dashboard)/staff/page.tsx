@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { COMPANIES, formatVND } from '@marketing-hub/shared';
-import { getCampaigns, getCompanyStats } from '@/lib/campaigns';
 import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
 import { IconUpload, IconPlus, IconCheck, IconClose, IconDownload, IconUsers, IconFilter, IconFile } from '@/app/components/icons';
@@ -30,46 +29,16 @@ interface LeadEntry {
     updatedAt?: string;  // Thời gian cập nhật cuối
 }
 
-/* ---- Demo seed data ---- */
-function makeDemoEntries(companyId: string): LeadEntry[] {
-    const campaigns = getCampaigns(companyId).filter(c => c.status === 'BẬT');
-    const today = new Date();
-    const entries: LeadEntry[] = [];
-    let idx = 1;
-
-    // Generate ~3 days of entries for active campaigns
-    for (let dayOffset = 0; dayOffset < 3; dayOffset++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - dayOffset);
-        const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-        const month = `T${d.getMonth() + 1}`;
-
-        for (const c of campaigns.slice(0, 6)) {
-            const total = Math.floor(Math.random() * 25) + 3;
-            const spam = Math.floor(total * 0.15);
-            const potential = total - spam;
-            const quality = Math.floor(potential * 0.6);
-            const booked = Math.floor(quality * 0.7);
-            const arrived = Math.floor(booked * 0.8);
-            const closed = Math.floor(arrived * 0.5);
-            const bills = Math.floor(closed * 0.8);
-            const digital = c.metrics.spend > 0;
-
-            entries.push({
-                id: `e${idx++}`,
-                date: dateStr,
-                month,
-                campaignId: c.id,
-                campaignName: c.name,
-                channel: c.channel,
-                total, spam, potential, quality, booked, arrived, closed, bills,
-                budgetTarget: digital ? Math.floor(Math.random() * 5_000_000) + 2_000_000 : 0,
-                budgetActual: digital ? Math.floor(Math.random() * 5_000_000) + 1_500_000 : 0,
-                enteredBy: ['Lan', 'Hương', 'Thảo', 'Minh'][Math.floor(Math.random() * 4)],
-            });
-        }
+/* ---- Fetch real data from DB ---- */
+async function fetchEntries(companyId: string): Promise<LeadEntry[]> {
+    try {
+        const res = await fetch(`/api/marketing/entries?companyId=${companyId}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.entries || [];
+    } catch {
+        return [];
     }
-    return entries;
 }
 
 /* ---- Main Component ---- */
@@ -79,16 +48,16 @@ export default function StaffDashboard() {
     const activeCompanyId = selectedCompanyId === 'all' ? 'san' : selectedCompanyId;
     const activeCompany = COMPANIES.find(c => c.id === activeCompanyId);
 
-    const [entries, setEntries] = useState<LeadEntry[]>(() => makeDemoEntries(activeCompanyId));
+    const [entries, setEntries] = useState<LeadEntry[]>([]);
 
     // Fetch user session
     useEffect(() => {
         fetchSession().then(s => { if (s) setUser(s); });
     }, []);
 
-    // Reload entries when company changes
+    // Fetch real entries when company changes
     useEffect(() => {
-        setEntries(makeDemoEntries(activeCompanyId));
+        fetchEntries(activeCompanyId).then(setEntries);
     }, [activeCompanyId]);
     const [showAddRow, setShowAddRow] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -97,7 +66,16 @@ export default function StaffDashboard() {
     const [filterEndDate, setFilterEndDate] = useState('');
 
     // Get campaigns for this company
-    const companyCampaigns = useMemo(() => getCampaigns(activeCompanyId).filter(c => c.status === 'BẬT'), [activeCompanyId]);
+    const companyCampaigns = useMemo(() => {
+        // Derive campaigns from entries
+        const seen = new Map<string, { id: string; name: string; channel: string }>();
+        for (const e of entries) {
+            if (!seen.has(e.campaignName)) {
+                seen.set(e.campaignName, { id: e.campaignId, name: e.campaignName, channel: e.channel });
+            }
+        }
+        return Array.from(seen.values());
+    }, [entries]);
     const channels = activeCompany?.channels || [];
 
     // Parse dd/mm/yyyy to Date for comparison
@@ -298,7 +276,11 @@ export default function StaffDashboard() {
             {/* Company selector cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 {COMPANIES.map(co => {
-                    const stats = getCompanyStats(co.id);
+                    const coEntries = entries.filter(e => {
+                        // Match company by checking if entries belong to this company's channel patterns
+                        if (activeCompanyId === co.id) return true;
+                        return false;
+                    });
                     const isActive = activeCompanyId === co.id;
                     return (
                         <div
@@ -329,12 +311,12 @@ export default function StaffDashboard() {
                             </div>
                             <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem' }}>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Chiến dịch BẬT</div>
-                                    <div style={{ fontWeight: 700 }}>{stats.active}/{stats.total}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Chiến dịch</div>
+                                    <div style={{ fontWeight: 700 }}>{isActive ? new Set(entries.map(e => e.campaignName)).size : '—'}</div>
                                 </div>
                                 <div>
                                     <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>Leads</div>
-                                    <div style={{ fontWeight: 700 }}>{stats.totalLeads.toLocaleString('vi-VN')}</div>
+                                    <div style={{ fontWeight: 700 }}>{isActive ? entries.reduce((s, e) => s + e.total, 0).toLocaleString('vi-VN') : '—'}</div>
                                 </div>
                             </div>
                         </div>

@@ -132,16 +132,12 @@ function rangeToDays(range: TimeRange): number {
     }
 }
 
-function getDateRange(range: TimeRange): { start: string; end: string } {
-    // Data is from Feb 2025 – May 2025, so use the actual data range
-    // We'll set "end" to the latest data date and compute "start" from there
-    const end = new Date('2025-05-16');
-    const days = rangeToDays(range);
-    const start = new Date(end);
-    start.setDate(start.getDate() - days);
+function getDateRange(): { start: string; end: string } {
+    // Fetch ALL available data — no date filtering
+    // The time range selector will filter on the client side
     return {
-        start: start.toISOString().split('T')[0],
-        end: end.toISOString().split('T')[0],
+        start: '2025-01-01',
+        end: '2026-12-31',
     };
 }
 
@@ -150,20 +146,17 @@ export function useMarketingData(timeRange: TimeRange, activeCard: string) {
     const [data, setData] = useState<APIResponse | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const { start, end } = getDateRange(timeRange);
-
-    // Fetch data
+    // Fetch ALL data once (no date filtering server-side)
     useEffect(() => {
         setLoading(true);
-        const url = `/api/marketing?start=${start}&end=${end}`;
-        fetch(url)
+        fetch('/api/marketing')
             .then(r => r.json())
             .then((d: APIResponse) => {
                 setData(d);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, [start, end]);
+    }, []);
 
     /* ---- Selector cards ---- */
     const selectorCards = useMemo<CompanyCard[]>(() => {
