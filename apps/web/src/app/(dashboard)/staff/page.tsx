@@ -288,18 +288,9 @@ export default function StaffDashboard() {
                         Nhập số liệu leads hàng ngày
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <TimeFilterBar
-                        timeRange={timeRange}
-                        onTimeRangeChange={setTimeRange}
-                        customStart={customStart}
-                        customEnd={customEnd}
-                        onCustomDateChange={(s, e) => { setCustomStart(s); setCustomEnd(e); }}
-                    />
-                    <button className="btn btn-primary" onClick={() => setShowAddRow(true)} style={{ fontSize: '0.8rem' }}>
-                        <IconPlus size={14} /> Thêm dòng
-                    </button>
-                </div>
+                <button className="btn btn-primary" onClick={() => setShowAddRow(true)} style={{ fontSize: '0.8rem' }}>
+                    <IconPlus size={14} /> Thêm dòng
+                </button>
             </div>
 
             {/* Company selector cards */}
@@ -362,6 +353,16 @@ export default function StaffDashboard() {
 
             {/* Filters */}
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <TimeFilterBar
+                    timeRange={timeRange}
+                    onTimeRangeChange={setTimeRange}
+                    customStart={customStart}
+                    customEnd={customEnd}
+                    onCustomDateChange={(s, e) => { setCustomStart(s); setCustomEnd(e); }}
+                />
+
+                <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 0.15rem' }} />
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                     <IconFilter size={14} /> Lọc:
                 </div>
