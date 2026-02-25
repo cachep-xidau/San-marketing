@@ -194,24 +194,20 @@ export default function GoogleAdsPage() {
                     </div>
 
                     <select
+                        className="dp-trigger"
                         value={filterAccount}
                         onChange={e => setFilterAccount(e.target.value)}
-                        style={{
-                            padding: '0.35rem 0.6rem', fontSize: '0.8rem', borderRadius: 'var(--radius-xs)',
-                            border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)',
-                        }}
+                        style={{ appearance: 'none', WebkitAppearance: 'none', minWidth: 140, paddingRight: '1.5rem', backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9a9a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
                     >
                         <option value="all">Tất cả tài khoản</option>
                         {data?.accounts.map(a => <option key={a} value={a}>{a}</option>)}
                     </select>
 
                     <select
+                        className="dp-trigger"
                         value={filterStatus}
                         onChange={e => setFilterStatus(e.target.value)}
-                        style={{
-                            padding: '0.35rem 0.6rem', fontSize: '0.8rem', borderRadius: 'var(--radius-xs)',
-                            border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)',
-                        }}
+                        style={{ appearance: 'none', WebkitAppearance: 'none', minWidth: 140, paddingRight: '1.5rem', backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9a9a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
                     >
                         <option value="all">Tất cả trạng thái</option>
                         <option value="ENABLED">Đang chạy</option>

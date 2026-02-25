@@ -413,10 +413,10 @@ export default function ReportPage() {
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <IconFilter size={14} />
                 <select
-                    className="input"
-                    style={{ width: 'auto', minWidth: 160, fontSize: '0.8rem', padding: '0.4rem 0.6rem' }}
+                    className="dp-trigger"
                     value={filterChannel}
                     onChange={e => setFilterChannel(e.target.value)}
+                    style={{ appearance: 'none', WebkitAppearance: 'none', minWidth: 140, paddingRight: '1.5rem', backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9a9a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
                 >
                     <option value="all">Tất cả kênh</option>
                     {companyChannels.map(ch => (
