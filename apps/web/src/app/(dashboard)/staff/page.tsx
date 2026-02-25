@@ -196,10 +196,10 @@ export default function StaffDashboard() {
                 id: `e${Date.now()}`,
                 date: dateStr,
                 month: `T${now.getMonth() + 1}`,
+                ...newRow,
                 campaignId: campaign.id,
                 campaignName: campaign.name,
                 channel: newRow.channel || campaign.channel,
-                ...newRow,
                 enteredBy: user?.name || 'Staff',
             };
             setEntries(prev => [entry, ...prev]);
