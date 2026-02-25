@@ -11,9 +11,9 @@ function getAuthSecret() {
 }
 
 const ROLE_ALLOWED_PATHS: Record<string, string[]> = {
-    CMO: ['/cmo', '/manager', '/staff', '/google-ads', '/settings', '/api/marketing', '/api/google-ads', '/api/auth/me'],
-    HEAD: ['/cmo', '/manager', '/staff', '/google-ads', '/settings', '/api/marketing', '/api/google-ads', '/api/auth/me'],
-    MANAGER: ['/manager', '/staff', '/google-ads', '/settings', '/api/marketing', '/api/google-ads', '/api/auth/me'],
+    CMO: ['/cmo', '/manager', '/staff', '/settings', '/api/marketing', '/api/auth/me'],
+    HEAD: ['/cmo', '/manager', '/staff', '/settings', '/api/marketing', '/api/auth/me'],
+    MANAGER: ['/manager', '/staff', '/settings', '/api/marketing', '/api/auth/me'],
     STAFF: ['/staff', '/settings', '/api/marketing', '/api/auth/me'],
 };
 
