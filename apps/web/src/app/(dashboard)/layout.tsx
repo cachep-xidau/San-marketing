@@ -2,7 +2,7 @@
 
 import { useEffect, useState, createContext, useContext, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getSession, logout, type SessionUser } from '@/lib/auth';
+import { fetchSession, logout, type SessionUser } from '@/lib/auth';
 import { ROLE_LABELS, COMPANIES, type Company } from '@marketing-hub/shared';
 import { IconHome, IconCampaign, IconUpload, IconComparison, IconReport, IconSettingsGear, IconLogout, IconBell, IconChart } from '@/app/components/icons';
 
@@ -66,9 +66,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname();
 
     useEffect(() => {
-        const session = getSession();
-        if (!session) { router.push('/'); return; }
-        setUser(session);
+        fetchSession().then(session => {
+            if (!session) { router.push('/'); return; }
+            setUser(session);
+        });
     }, [router]);
 
     if (!user) return null;
@@ -140,7 +141,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         }}>{ROLE_LABELS[user.role]}</div>
                     </div>
                     <button
-                        onClick={() => { logout(); router.push('/'); }}
+                        onClick={() => { logout(); }}
                         className="sidebar-logout-icon"
                         title="Đăng xuất"
                     >

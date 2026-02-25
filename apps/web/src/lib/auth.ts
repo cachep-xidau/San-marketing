@@ -7,46 +7,24 @@ export interface SessionUser {
 }
 
 /**
- * Parse session from cookie (client-side)
+ * Fetch current user from server-side JWT session.
+ * Since the cookie is HttpOnly, we must call the API to read it.
  */
-export function getSession(): SessionUser | null {
-    if (typeof document === 'undefined') return null;
-
-    const cookie = document.cookie
-        .split(';')
-        .find(c => c.trim().startsWith('mh_session='));
-
-    if (!cookie) return null;
-
+export async function fetchSession(): Promise<SessionUser | null> {
     try {
-        return JSON.parse(decodeURIComponent(cookie.split('=').slice(1).join('=')));
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.user || null;
     } catch {
         return null;
     }
 }
 
 /**
- * Parse session from cookie string (server-side)
+ * Logout — calls server to clear HttpOnly cookie
  */
-export function getSessionFromCookies(cookieHeader: string | null): SessionUser | null {
-    if (!cookieHeader) return null;
-
-    const cookie = cookieHeader
-        .split(';')
-        .find(c => c.trim().startsWith('mh_session='));
-
-    if (!cookie) return null;
-
-    try {
-        return JSON.parse(decodeURIComponent(cookie.split('=').slice(1).join('=')));
-    } catch {
-        return null;
-    }
-}
-
-/**
- * Logout — clear session cookie
- */
-export function logout() {
-    document.cookie = 'mh_session=;path=/;max-age=0';
+export async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    window.location.href = '/';
 }

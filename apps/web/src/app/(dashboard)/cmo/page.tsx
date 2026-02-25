@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { COMPANIES, CHANNEL_LABELS, CHANNEL_COLORS, formatVND } from '@marketing-hub/shared';
 import { getCampaigns, getCompanyStats } from '@/lib/campaigns';
 import {
@@ -15,7 +15,7 @@ import {
     getDailySeries,
     type DailySeriesPoint,
 } from '@/lib/daily-metrics';
-import { getSession } from '@/lib/auth';
+import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
 import { IconTarget, IconDollar, IconChart } from '@/app/components/icons';
 
@@ -284,10 +284,15 @@ function ChartCard({
 
 /* ====== Main Page ====== */
 export default function CMODashboard() {
-    const user = getSession();
+    const [user, setUser] = useState<{ name: string; role: string } | null>(null);
     const { selectedCompanyId } = useCompany();
     const [timeRange, setTimeRange] = useState<TimeRange>('30d');
     const [activeCard, setActiveCard] = useState<string>('all');
+
+    // Fetch user session
+    useEffect(() => {
+        fetchSession().then(s => { if (s) setUser(s); });
+    }, []);
 
     const periodLabel = rangeToLabel(timeRange);
     const { start, end } = getRangeDates(timeRange);

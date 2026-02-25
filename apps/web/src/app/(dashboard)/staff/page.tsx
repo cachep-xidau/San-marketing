@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { COMPANIES, formatVND } from '@marketing-hub/shared';
 import { getCampaigns, getCompanyStats } from '@/lib/campaigns';
-import { getSession } from '@/lib/auth';
+import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
 import { IconUpload, IconPlus, IconCheck, IconClose, IconDownload, IconUsers, IconFilter, IconFile } from '@/app/components/icons';
 
@@ -74,12 +74,17 @@ function makeDemoEntries(companyId: string): LeadEntry[] {
 
 /* ---- Main Component ---- */
 export default function StaffDashboard() {
-    const user = getSession();
+    const [user, setUser] = useState<{ name: string; role: string } | null>(null);
     const { selectedCompanyId, setSelectedCompanyId } = useCompany();
     const activeCompanyId = selectedCompanyId === 'all' ? 'san' : selectedCompanyId;
     const activeCompany = COMPANIES.find(c => c.id === activeCompanyId);
 
     const [entries, setEntries] = useState<LeadEntry[]>(() => makeDemoEntries(activeCompanyId));
+
+    // Fetch user session
+    useEffect(() => {
+        fetchSession().then(s => { if (s) setUser(s); });
+    }, []);
 
     // Reload entries when company changes
     useEffect(() => {

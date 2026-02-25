@@ -4,14 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROLE_DASHBOARD_PATHS, type UserRole } from '@marketing-hub/shared';
 
-// Demo users (sẽ thay bằng DB khi có PostgreSQL)
-const DEMO_USERS: Record<string, { password: string; name: string; role: UserRole }> = {
-    'cmo@sgroup.vn': { password: 'demo', name: 'Minh (CMO)', role: 'CMO' },
-    'head@sgroup.vn': { password: 'demo', name: 'Lan (Head)', role: 'HEAD' },
-    'manager@sgroup.vn': { password: 'demo', name: 'Hùng (Manager)', role: 'MANAGER' },
-    'staff@sgroup.vn': { password: 'demo', name: 'Trang (Staff)', role: 'STAFF' },
-};
-
 export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState('');
@@ -24,25 +16,28 @@ export default function LoginPage() {
         setError('');
         setLoading(true);
 
-        // Simulate auth delay
-        await new Promise(r => setTimeout(r, 400));
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
 
-        const user = DEMO_USERS[email.toLowerCase()];
-        if (!user || user.password !== password) {
-            setError('Email hoặc mật khẩu không đúng');
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.error || 'Đăng nhập thất bại');
+                setLoading(false);
+                return;
+            }
+
+            // Redirect to role-specific dashboard
+            const role = data.role as UserRole;
+            router.push(ROLE_DASHBOARD_PATHS[role] || '/cmo');
+        } catch {
+            setError('Lỗi kết nối. Vui lòng thử lại.');
             setLoading(false);
-            return;
         }
-
-        // Store session in cookie
-        document.cookie = `mh_session=${encodeURIComponent(JSON.stringify({
-            email: email.toLowerCase(),
-            name: user.name,
-            role: user.role,
-        }))};path=/;max-age=${60 * 60 * 24}`;
-
-        // Redirect to role-specific dashboard
-        router.push(ROLE_DASHBOARD_PATHS[user.role]);
     }
 
     return (
@@ -90,7 +85,6 @@ export default function LoginPage() {
                         {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                     </button>
                 </form>
-
 
             </div>
         </div>
