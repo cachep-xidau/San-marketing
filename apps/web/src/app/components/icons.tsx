@@ -12,6 +12,7 @@ const icon = (path: string) => {
     const Icon = ({ size = 20, color = 'currentColor', className }: IconProps) => (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
             strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"
+            aria-hidden="true"
             className={className} style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
             <path d={path} />
         </svg>
@@ -25,6 +26,7 @@ const multiIcon = (paths: string[], fills?: (string | null)[]) => {
     const Icon = ({ size = 20, color = 'currentColor', className }: IconProps) => (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
             strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round"
+            aria-hidden="true"
             className={className} style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
             {paths.map((d, i) => (
                 <path key={i} d={d} fill={fills?.[i] || 'none'} />

@@ -63,7 +63,7 @@ export default function TimeFilterBar({
         background: active ? 'var(--bg-card)' : 'transparent',
         color: active ? 'var(--text)' : 'var(--text-muted)',
         boxShadow: active ? 'var(--shadow-sm)' : 'none',
-        transition: 'all 0.12s ease',
+        transition: 'color 0.12s ease, background-color 0.12s ease, border-color 0.12s ease',
     });
 
     return (
@@ -99,7 +99,7 @@ export default function TimeFilterBar({
                 borderRadius: 'var(--radius-xs, 6px)',
                 background: isCustom ? 'var(--bg-card)' : 'transparent',
                 boxShadow: isCustom ? 'var(--shadow-sm)' : 'none',
-                transition: 'all 0.12s ease',
+                transition: 'color 0.12s ease, background-color 0.12s ease, border-color 0.12s ease',
             }}>
                 <DatePicker
                     value={localStart}

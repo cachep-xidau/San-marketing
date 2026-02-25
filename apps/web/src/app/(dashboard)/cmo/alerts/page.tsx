@@ -152,7 +152,7 @@ export default function AlertsPage() {
                             padding: '0.75rem 1.5rem', background: 'none', border: 'none',
                             borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
                             color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
-                            fontWeight: 600, fontSize: 'var(--font-lg)', cursor: 'pointer', transition: 'all 0.15s',
+                            fontWeight: 600, fontSize: 'var(--font-lg)', cursor: 'pointer', transition: 'opacity 0.15s, transform 0.15s',
                             display: 'flex', alignItems: 'center', gap: '0.5rem',
                         }}
                     >

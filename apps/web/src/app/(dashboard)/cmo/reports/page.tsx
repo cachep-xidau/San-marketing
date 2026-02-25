@@ -274,7 +274,7 @@ export default function ReportPage() {
                                 outlineOffset: -1,
                                 opacity: isActive ? 1 : 0.55,
                                 boxShadow: isActive ? 'var(--shadow)' : 'none',
-                                transition: 'all 0.18s ease',
+                                transition: 'opacity 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease',
                                 padding: '0.875rem 1rem',
                             }}
                             onMouseEnter={e => { if (!isActive) { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; } }}

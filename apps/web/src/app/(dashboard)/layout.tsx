@@ -2,6 +2,7 @@
 
 import { useEffect, useState, createContext, useContext, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { fetchSession, logout, type SessionUser } from '@/lib/auth';
 import { ROLE_LABELS, COMPANIES, type Company } from '@marketing-hub/shared';
 import { IconHome, IconCampaign, IconUpload, IconComparison, IconReport, IconSettingsGear, IconLogout, IconBell, IconChart, IconGoogleAds } from '@/app/components/icons';
@@ -82,6 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <button
                     className="sidebar-toggle"
                     onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    aria-label={sidebarCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
                     title={sidebarCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
                 >
                     <MenuToggleIcon collapsed={sidebarCollapsed} />
@@ -93,14 +95,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <ul className="sidebar-nav">
                         {NAV_ITEMS.filter(item => item.roles.includes(user.role)).map(item => (
                             <li key={item.href}>
-                                <a
+                                <Link
                                     href={item.href}
                                     className={`sidebar-link ${pathname === item.href || (item.href !== '/cmo' && pathname.startsWith(item.href)) ? 'active' : ''}`}
-                                    onClick={e => { e.preventDefault(); router.push(item.href); }}
                                     title={sidebarCollapsed ? item.label : undefined}
                                 >
                                     {item.icon} <span>{item.label}</span>
-                                </a>
+                                </Link>
                             </li>
                         ))}
                     </ul>
@@ -125,6 +126,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <button
                         onClick={() => { logout(); }}
                         className="sidebar-logout-icon"
+                        aria-label="Đăng xuất"
                         title="Đăng xuất"
                     >
                         <IconLogout size={16} />
@@ -132,7 +134,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
             </aside>
 
-            <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed-main' : ''}`}>{children}</main>
+            <a href="#main-content" className="skip-link">Bỏ qua đến nội dung chính</a>
+            <main id="main-content" className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed-main' : ''}`}>{children}</main>
         </CompanyContext.Provider>
     );
 }

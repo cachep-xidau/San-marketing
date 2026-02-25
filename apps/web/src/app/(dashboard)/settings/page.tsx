@@ -162,7 +162,7 @@ export default function SettingsPage() {
                             fontWeight: 600,
                             fontSize: 'var(--font-lg)',
                             cursor: 'pointer',
-                            transition: 'all 0.15s',
+                            transition: 'opacity 0.15s, transform 0.15s',
                         }}
                     >
                         {tab === 'connectors' ? <><IconLink size={15} /> Kênh quảng cáo</> : <><IconClock size={15} /> Lịch sử đồng bộ</>}
@@ -237,7 +237,7 @@ export default function SettingsPage() {
                                                                 border: `1px solid ${acc.selected ? 'var(--primary)' : 'var(--border)'}`,
                                                                 borderRadius: 'var(--radius-sm)',
                                                                 cursor: 'pointer', fontSize: 'var(--font-base)',
-                                                                transition: 'all 0.15s',
+                                                                transition: 'background-color 0.15s, border-color 0.15s',
                                                             }}>
                                                                 <input
                                                                     type="checkbox"

@@ -328,7 +328,7 @@ export default function StaffDashboard() {
                                 outline: isActive ? `2px solid ${co.color}` : 'none',
                                 outlineOffset: -1,
                                 opacity: isActive ? 1 : 0.65,
-                                transition: 'all 0.15s ease',
+                                transition: 'opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease',
                                 padding: '0.75rem 1rem',
                             }}
                         >

@@ -218,6 +218,7 @@ export default function ManagerDashboard() {
                                 <td>
                                     <button
                                         onClick={() => setDetailId(c.id)}
+                                        aria-label="Xem chi tiết"
                                         style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }}
                                     >
                                         <IconEye size={16} />
