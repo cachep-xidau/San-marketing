@@ -101,14 +101,13 @@ export default function TimeFilterBar({
                 boxShadow: isCustom ? 'var(--shadow-sm)' : 'none',
                 transition: 'all 0.12s ease',
             }}>
-                <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Từ</span>
                 <DatePicker
                     value={localStart}
                     onChange={v => handleDateChange(v, localEnd)}
                     placeholder="Từ ngày"
                     compact
                 />
-                <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>đến</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>—</span>
                 <DatePicker
                     value={localEnd}
                     onChange={v => handleDateChange(localStart, v)}
