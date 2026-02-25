@@ -476,66 +476,44 @@ export default function CMODashboard() {
                         ({periodLabel} gần nhất — {activeLabel})
                     </span>
                 </h2>
-                <div className="card">
-                    <table className="table">
+                <div className="card" style={{ overflow: 'auto', padding: 0 }}>
+                    <table className="table" style={{ fontSize: 'var(--font-sm)', whiteSpace: 'nowrap' }}>
                         <thead>
-                            <tr>
-                                <th>Kênh</th>
+                            <tr style={{ background: 'var(--bg-card)' }}>
+                                <th>KÊNH</th>
                                 {(['leads', 'conversions', 'spend', 'cpl'] as const).map(key => (
                                     <th
                                         key={key}
                                         onClick={() => handleSort(key)}
-                                        style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+                                        style={{ cursor: 'pointer', userSelect: 'none', textAlign: key === 'spend' || key === 'cpl' ? 'right' : 'center', ...(key === 'leads' ? { fontWeight: 700, color: 'var(--primary)' } : {}) }}
                                     >
-                                        {{ leads: 'Leads', conversions: 'Conversions', spend: 'Chi tiêu', cpl: 'CPL' }[key]}
+                                        {{ leads: 'LEADS', conversions: 'CHẤT LƯỢNG', spend: 'CHI TIÊU', cpl: 'CPL' }[key]}
                                         {sortKey === key && <span style={{ marginLeft: 4, fontSize: 'var(--font-sm)' }}>{sortDir === 'desc' ? '↓' : '↑'}</span>}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedChannels.map((ch, idx) => (
-                                <tr
-                                    key={ch.channel}
-                                    style={{
-                                        transition: 'background 0.12s ease',
-                                        animation: `fadeIn 0.2s ease ${idx * 0.02}s both`,
-                                    }}
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover, rgba(0,0,0,0.03))'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = ''; }}
-                                >
+                            {sortedChannels.map(ch => (
+                                <tr key={ch.channel}>
                                     <td style={{ fontWeight: 500 }}>
                                         <span style={{ color: CHANNEL_COLORS[ch.channel] || '#6B7280' }}>●</span> {CHANNEL_LABELS[ch.channel] || ch.channel}
                                     </td>
-                                    <td style={{ fontWeight: 600 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            <span style={{ minWidth: 32 }}>{ch.leads.toLocaleString('vi-VN')}</span>
-                                            <div style={{ flex: 1, height: 5, background: 'var(--bg)', borderRadius: 3, overflow: 'hidden', maxWidth: 60 }}>
-                                                <div style={{ width: `${(ch.leads / maxLeads) * 100}%`, height: '100%', background: '#C47035', opacity: 0.5, borderRadius: 3 }} />
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            <span style={{ minWidth: 32 }}>{ch.conversions.toLocaleString('vi-VN')}</span>
-                                            <div style={{ flex: 1, height: 5, background: 'var(--bg)', borderRadius: 3, overflow: 'hidden', maxWidth: 60 }}>
-                                                <div style={{ width: `${(ch.conversions / maxConversions) * 100}%`, height: '100%', background: 'var(--success)', opacity: 0.5, borderRadius: 3 }} />
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{ch.spend > 0 ? formatVND(ch.spend) : '—'}</td>
-                                    <td style={{ fontWeight: 600 }}>
+                                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{ch.leads.toLocaleString('vi-VN')}</td>
+                                    <td style={{ textAlign: 'center' }}>{ch.conversions > 0 ? ch.conversions.toLocaleString('vi-VN') : '—'}</td>
+                                    <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{ch.spend > 0 ? formatVND(ch.spend) : '—'}</td>
+                                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
                                         {ch.spend > 0 && ch.leads > 0 ? formatVND(ch.spend / ch.leads) : '—'}
                                     </td>
                                 </tr>
                             ))}
                             {sortedChannels.length > 1 && (
-                                <tr style={{ fontWeight: 700, borderTop: '2px solid var(--border)' }}>
+                                <tr style={{ fontWeight: 700, borderTop: '2px solid var(--border)', background: 'var(--bg-hover, rgba(0,0,0,0.02))' }}>
                                     <td>Tổng</td>
-                                    <td>{channelTotals.leads.toLocaleString('vi-VN')}</td>
-                                    <td>{channelTotals.conversions.toLocaleString('vi-VN')}</td>
-                                    <td>{formatVND(channelTotals.spend)}</td>
-                                    <td>{channelTotals.spend > 0 && channelTotals.leads > 0 ? formatVND(channelTotals.spend / channelTotals.leads) : '—'}</td>
+                                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary)' }}>{channelTotals.leads.toLocaleString('vi-VN')}</td>
+                                    <td style={{ textAlign: 'center' }}>{channelTotals.conversions.toLocaleString('vi-VN')}</td>
+                                    <td style={{ textAlign: 'right', fontSize: 'var(--font-sm)' }}>{formatVND(channelTotals.spend)}</td>
+                                    <td style={{ textAlign: 'right' }}>{channelTotals.spend > 0 && channelTotals.leads > 0 ? formatVND(channelTotals.spend / channelTotals.leads) : '—'}</td>
                                 </tr>
                             )}
                         </tbody>
