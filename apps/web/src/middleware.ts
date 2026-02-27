@@ -4,6 +4,15 @@ import { jwtVerify } from 'jose';
 
 const PUBLIC_PATHS = ['/', '/api/auth/login', '/api/auth/logout'];
 
+/* Paths that allow unauthenticated READ access (for external dashboards like Nexus Hub) */
+const PUBLIC_API_PREFIXES = ['/api/marketing'];
+
+const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 function getAuthSecret() {
     const secret = process.env.AUTH_SECRET;
     if (!secret) throw new Error('AUTH_SECRET environment variable is required');
@@ -35,6 +44,18 @@ export async function middleware(request: NextRequest) {
     // Allow static assets
     if (pathname.startsWith('/_next/') || pathname.startsWith('/logos/') || pathname === '/robots.txt') {
         return NextResponse.next();
+    }
+
+    // CORS preflight for public API paths
+    if (request.method === 'OPTIONS' && PUBLIC_API_PREFIXES.some(p => pathname.startsWith(p))) {
+        return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+    }
+
+    // Allow unauthenticated READ access to public API paths (for Nexus Hub)
+    if (request.method === 'GET' && PUBLIC_API_PREFIXES.some(p => pathname.startsWith(p))) {
+        const response = NextResponse.next();
+        Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
+        return response;
     }
 
     // Get JWT from cookie
