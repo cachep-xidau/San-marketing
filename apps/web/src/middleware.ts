@@ -52,10 +52,13 @@ export async function middleware(request: NextRequest) {
     }
 
     // Allow unauthenticated READ access to public API paths (for Nexus Hub)
-    if (request.method === 'GET' && PUBLIC_API_PREFIXES.some(p => pathname.startsWith(p))) {
-        const response = NextResponse.next();
-        Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
-        return response;
+    // Also allow POST to sync endpoints (triggered by UI Sync button)
+    if (PUBLIC_API_PREFIXES.some(p => pathname.startsWith(p))) {
+        if (request.method === 'GET' || pathname.startsWith('/api/marketing/sync')) {
+            const response = NextResponse.next();
+            Object.entries(CORS_HEADERS).forEach(([k, v]) => response.headers.set(k, v));
+            return response;
+        }
     }
 
     // Get JWT from cookie
