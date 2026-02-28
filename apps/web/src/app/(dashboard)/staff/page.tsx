@@ -111,7 +111,7 @@ export default function StaffDashboard() {
     const [syncing, setSyncing] = useState(false);
     const [syncStatus, setSyncStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [showLogs, setShowLogs] = useState(false);
-    const [syncLogs, setSyncLogs] = useState<Array<{ id: number; status: string; conclusion: string | null; createdAt: string; duration: number | null; url: string }>>([]);
+    const [syncLogs, setSyncLogs] = useState<Array<{ id: number; status: string; conclusion: string | null; createdAt: string; duration: number | null; url: string; syncDetails?: { details: { company: string; inserted: number }[]; totalRows: number | null; totalInserted: number | null } | null }>>([]);
     const [logsLoading, setLogsLoading] = useState(false);
 
     const handleSync = useCallback(async () => {
@@ -698,21 +698,39 @@ export default function StaffDashboard() {
                                             <div key={run.id} style={{
                                                 padding: '0.75rem 1rem', borderRadius: 8,
                                                 border: '1px solid var(--border)',
-                                                display: 'flex', alignItems: 'center', gap: '0.75rem',
                                             }}>
-                                                <span style={{ fontSize: '1.25rem' }}>{statusIcon}</span>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 600, fontSize: 'var(--font-md)', color: statusColor }}>
-                                                        {statusLabel}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                    <span style={{ fontSize: '1.25rem' }}>{statusIcon}</span>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontWeight: 600, fontSize: 'var(--font-md)', color: statusColor }}>
+                                                            {statusLabel}
+                                                        </div>
+                                                        <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>
+                                                            {timeStr}{run.duration ? ` · ${run.duration}s` : ''}
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>
-                                                        {timeStr}{run.duration ? ` · ${run.duration}s` : ''}
-                                                    </div>
+                                                    <a href={run.url} target="_blank" rel="noopener noreferrer"
+                                                        style={{ fontSize: 'var(--font-sm)', color: 'var(--primary)', textDecoration: 'none' }}>
+                                                        Chi tiết →
+                                                    </a>
                                                 </div>
-                                                <a href={run.url} target="_blank" rel="noopener noreferrer"
-                                                    style={{ fontSize: 'var(--font-sm)', color: 'var(--primary)', textDecoration: 'none' }}>
-                                                    Chi tiết →
-                                                </a>
+                                                {run.syncDetails && run.syncDetails.details.length > 0 && (
+                                                    <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--border)', fontSize: 'var(--font-sm)' }}>
+                                                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                                            {run.syncDetails.details.map(d => (
+                                                                <span key={d.company} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                                    <span style={{ fontWeight: 600, textTransform: 'uppercase', fontSize: 'var(--font-xs)' }}>{d.company}</span>
+                                                                    <span style={{ color: 'var(--primary)', fontWeight: 700 }}>+{d.inserted}</span>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                        {run.syncDetails.totalInserted != null && (
+                                                            <div style={{ marginTop: '0.25rem', color: 'var(--text-muted)', fontSize: 'var(--font-xs)' }}>
+                                                                Tổng: <strong>{run.syncDetails.totalInserted}</strong> rows mới · DB: <strong>{run.syncDetails.totalRows?.toLocaleString('vi-VN')}</strong> rows
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}

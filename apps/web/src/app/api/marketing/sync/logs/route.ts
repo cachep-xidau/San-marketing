@@ -12,6 +12,66 @@ interface WorkflowRun {
     updated_at: string;
     run_started_at: string;
     html_url: string;
+    jobs_url: string;
+}
+
+interface SyncDetail {
+    company: string;
+    inserted: number;
+}
+
+/**
+ * Parse GitHub Actions job logs for sync details.
+ * Looks for lines like: "✅ Inserted 438 new rows for san"
+ * and "📊 DB after: 5410 total rows"
+ */
+function parseSyncDetails(logText: string): { details: SyncDetail[]; totalRows: number | null; totalInserted: number | null } {
+    const details: SyncDetail[] = [];
+    let totalRows: number | null = null;
+    let totalInserted: number | null = null;
+
+    // Match: ✅ Inserted 438 new rows for san
+    const insertRegex = /Inserted (\d+) new rows for (\w+)/g;
+    let match;
+    while ((match = insertRegex.exec(logText)) !== null) {
+        details.push({ company: match[2], inserted: parseInt(match[1]) });
+    }
+
+    // Match: ✅ Appended 1021 new rows
+    const appendMatch = logText.match(/Appended (\d+) new rows/);
+    if (appendMatch) totalInserted = parseInt(appendMatch[1]);
+
+    // Match: 📊 DB after: 5410 total rows
+    const dbMatch = logText.match(/DB after: (\d+) total rows/);
+    if (dbMatch) totalRows = parseInt(dbMatch[1]);
+
+    return { details, totalRows, totalInserted };
+}
+
+async function fetchJobLogs(token: string, runId: number): Promise<string | null> {
+    try {
+        // Get jobs for this run
+        const jobsRes = await fetch(
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}/jobs`,
+            { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' } },
+        );
+        if (!jobsRes.ok) return null;
+
+        const jobsData = await jobsRes.json();
+        const job = jobsData.jobs?.[0];
+        if (!job) return null;
+
+        // Get logs for this job
+        const logsRes = await fetch(
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/jobs/${job.id}/logs`,
+            { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' }, redirect: 'follow' },
+        );
+        if (!logsRes.ok) return null;
+
+        return await logsRes.text();
+    } catch {
+        return null;
+    }
 }
 
 export async function GET() {
@@ -31,7 +91,7 @@ export async function GET() {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/vnd.github.v3+json',
                 },
-                next: { revalidate: 30 }, // Cache for 30s
+                next: { revalidate: 30 },
             },
         );
 
@@ -44,20 +104,39 @@ export async function GET() {
         }
 
         const data = await res.json();
-        const runs = (data.workflow_runs || []).map((run: WorkflowRun) => {
-            const started = new Date(run.run_started_at || run.created_at);
-            const ended = new Date(run.updated_at);
-            const durationMs = ended.getTime() - started.getTime();
 
-            return {
-                id: run.id,
-                status: run.status,
-                conclusion: run.conclusion,
-                createdAt: run.created_at,
-                duration: durationMs > 0 ? Math.round(durationMs / 1000) : null,
-                url: run.html_url,
-            };
-        });
+        // Process runs — fetch logs for completed runs (max 3 to limit API calls)
+        const workflowRuns = data.workflow_runs || [];
+        let logsFetched = 0;
+
+        const runs = await Promise.all(
+            workflowRuns.map(async (run: WorkflowRun) => {
+                const started = new Date(run.run_started_at || run.created_at);
+                const ended = new Date(run.updated_at);
+                const durationMs = ended.getTime() - started.getTime();
+
+                let syncDetails = null;
+
+                // Fetch logs only for completed/successful runs, max 3
+                if (run.status === 'completed' && run.conclusion === 'success' && logsFetched < 3) {
+                    logsFetched++;
+                    const logText = await fetchJobLogs(token, run.id);
+                    if (logText) {
+                        syncDetails = parseSyncDetails(logText);
+                    }
+                }
+
+                return {
+                    id: run.id,
+                    status: run.status,
+                    conclusion: run.conclusion,
+                    createdAt: run.created_at,
+                    duration: durationMs > 0 ? Math.round(durationMs / 1000) : null,
+                    url: run.html_url,
+                    syncDetails,
+                };
+            }),
+        );
 
         return NextResponse.json(
             { runs },
