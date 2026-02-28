@@ -1,0 +1,39 @@
+name: Sync Marketing Data
+
+on:
+  schedule:
+    # 12:00 VN (05:00 UTC) and 00:00 VN (17:00 UTC)
+    - cron: '0 5,17 * * *'
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  sync:
+    name: Google Sheets → Neon PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate --schema=packages/db/prisma/schema.prisma
+
+      - name: Download CSV from Google Sheets
+        run: node scripts/sync-from-sheet.mjs
+
+      - name: Import marketing data (2026 only)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/import-new-data.mjs
+
+      - name: Import campaign master
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/import-master.mjs

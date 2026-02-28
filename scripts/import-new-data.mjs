@@ -1,7 +1,14 @@
 /**
- * Import CSV data from Google Sheets into Neon PostgreSQL
+ * Append NEW data (2026+) from CSV files to the database.
  *
- * Usage: node scripts/import-csv.mjs
+ * Unlike import-csv.mjs (full refresh), this script:
+ *   1. Reads each CSV file
+ *   2. Filters rows where date >= CUTOFF_DATE (default: 2026-01-01)
+ *   3. Deletes only rows in that date range per company (idempotent)
+ *   4. Inserts the new rows in batches
+ *
+ * Usage: DATABASE_URL="..." node scripts/import-new-data.mjs
+ *        DATABASE_URL="..." node scripts/import-new-data.mjs --cutoff 2026-02-01
  */
 
 import { readFileSync } from 'fs';
@@ -12,6 +19,10 @@ import { PrismaClient } from '@prisma/client';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const prisma = new PrismaClient();
 
+// Parse --cutoff argument or default to 2026-01-01
+const cutoffArg = process.argv.find((a, i) => process.argv[i - 1] === '--cutoff');
+const CUTOFF_DATE = cutoffArg ? new Date(cutoffArg) : new Date('2026-01-01');
+
 const COMPANY_MAP = {
     san_new: 'san',
     teennie_new: 'teennie',
@@ -20,15 +31,14 @@ const COMPANY_MAP = {
 
 function parseVNNumber(str) {
     if (!str || str.trim() === '') return 0;
-    // Remove dots (thousands separator) and spaces, replace comma with dot
     return parseFloat(str.replace(/\./g, '').replace(/,/g, '.').replace(/\s/g, '').trim()) || 0;
 }
 
 function parseDate(dateStr) {
-    // DD/MM/YYYY → Date (UTC to avoid timezone shift)
     const parts = dateStr.split('/');
     if (parts.length !== 3) return null;
     const [day, month, year] = parts;
+    if (!year || year.length !== 4) return null;
     return new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
 }
 
@@ -40,7 +50,6 @@ function parseCSV(content) {
         const line = lines[i].trim();
         if (!line) continue;
 
-        // Parse CSV with quoted fields
         const fields = [];
         let current = '';
         let inQuotes = false;
@@ -58,7 +67,6 @@ function parseCSV(content) {
         }
         fields.push(current.trim());
 
-        // Need at least 16 meaningful columns (A-P)
         if (fields.length < 6) continue;
 
         const dateStr = fields[0];
@@ -68,7 +76,6 @@ function parseCSV(content) {
         if (!date || isNaN(date.getTime())) continue;
 
         const totalLead = parseInt(fields[5]) || 0;
-        // Skip rows with zero total leads (empty/summary rows)
         if (totalLead === 0 && !fields[4]) continue;
 
         rows.push({
@@ -94,31 +101,38 @@ function parseCSV(content) {
     return rows;
 }
 
-async function importFile(filename, companyId) {
+async function importNewData(filename, companyId) {
     const filepath = join(__dirname, '..', 'data', filename);
     console.log(`\n📄 Reading ${filename}...`);
 
     const content = readFileSync(filepath, 'utf-8');
-    const rows = parseCSV(content);
-    console.log(`   Parsed ${rows.length} valid rows`);
+    const allRows = parseCSV(content);
+    console.log(`   Total parsed: ${allRows.length} rows`);
 
-    if (rows.length === 0) {
-        console.log('   ⚠️ No valid rows, skipping');
+    // Filter only rows >= cutoff date
+    const newRows = allRows.filter(r => r.date >= CUTOFF_DATE);
+    console.log(`   New rows (>= ${CUTOFF_DATE.toISOString().split('T')[0]}): ${newRows.length}`);
+
+    if (newRows.length === 0) {
+        console.log('   ⚠️ No new rows to import, skipping');
         return 0;
     }
 
-    // Delete existing data for this company
+    // Delete only the date range we're about to insert (idempotent)
     const deleted = await prisma.marketingEntry.deleteMany({
-        where: { companyId },
+        where: {
+            companyId,
+            date: { gte: CUTOFF_DATE },
+        },
     });
-    console.log(`   🗑️ Deleted ${deleted.count} existing rows for ${companyId}`);
+    console.log(`   🗑️ Deleted ${deleted.count} existing rows for ${companyId} (>= ${CUTOFF_DATE.toISOString().split('T')[0]})`);
 
-    // Insert in batches of 100
+    // Insert in batches
     let inserted = 0;
     const BATCH_SIZE = 100;
 
-    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-        const batch = rows.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < newRows.length; i += BATCH_SIZE) {
+        const batch = newRows.slice(i, i + BATCH_SIZE);
         await prisma.marketingEntry.createMany({
             data: batch.map(row => ({
                 companyId,
@@ -143,33 +157,42 @@ async function importFile(filename, companyId) {
         inserted += batch.length;
     }
 
-    console.log(`   ✅ Inserted ${inserted} rows for ${companyId}`);
+    console.log(`   ✅ Inserted ${inserted} new rows for ${companyId}`);
     return inserted;
 }
 
 async function main() {
-    console.log('🚀 Marketing Data Import');
-    console.log('========================\n');
+    console.log('🚀 Marketing Data — Append New Data');
+    console.log(`📅 Cutoff date: ${CUTOFF_DATE.toISOString().split('T')[0]}`);
+    console.log('====================================\n');
 
-    let total = 0;
+    // Show existing DB state
+    const existingCount = await prisma.marketingEntry.count();
+    console.log(`📊 DB before: ${existingCount} total rows`);
+
+    let totalNew = 0;
 
     for (const [filename, companyId] of Object.entries(COMPANY_MAP)) {
-        total += await importFile(`${filename}.csv`, companyId);
+        totalNew += await importNewData(`${filename}.csv`, companyId);
     }
 
-    console.log(`\n========================`);
-    console.log(`✅ Total: ${total} rows imported`);
+    console.log(`\n====================================`);
+    console.log(`✅ Appended ${totalNew} new rows`);
 
-    // Verify
-    const count = await prisma.marketingEntry.count();
-    console.log(`📊 DB total: ${count} rows`);
+    // Verify final state
+    const finalCount = await prisma.marketingEntry.count();
+    console.log(`📊 DB after: ${finalCount} total rows`);
 
-    // Show date range
-    const [oldest, newest] = await Promise.all([
-        prisma.marketingEntry.findFirst({ orderBy: { date: 'asc' }, select: { date: true } }),
-        prisma.marketingEntry.findFirst({ orderBy: { date: 'desc' }, select: { date: true } }),
-    ]);
-    console.log(`📅 Date range: ${oldest?.date?.toISOString().split('T')[0]} → ${newest?.date?.toISOString().split('T')[0]}`);
+    // Show date range per company
+    const companies = ['san', 'teennie', 'tgil'];
+    for (const c of companies) {
+        const [oldest, newest, count] = await Promise.all([
+            prisma.marketingEntry.findFirst({ where: { companyId: c }, orderBy: { date: 'asc' }, select: { date: true } }),
+            prisma.marketingEntry.findFirst({ where: { companyId: c }, orderBy: { date: 'desc' }, select: { date: true } }),
+            prisma.marketingEntry.count({ where: { companyId: c } }),
+        ]);
+        console.log(`   ${c}: ${count} rows (${oldest?.date?.toISOString().split('T')[0]} → ${newest?.date?.toISOString().split('T')[0]})`);
+    }
 
     await prisma.$disconnect();
 }
