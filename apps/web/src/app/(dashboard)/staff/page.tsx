@@ -5,7 +5,7 @@ import { COMPANIES, formatVND } from '@marketing-hub/shared';
 import { type TimeRange } from '@/lib/daily-metrics';
 import { fetchSession } from '@/lib/auth';
 import { useCompany } from '../layout';
-import { IconUpload, IconPlus, IconCheck, IconClose, IconDownload, IconUsers, IconFilter, IconFile } from '@/app/components/icons';
+import { IconUpload, IconPlus, IconCheck, IconClose, IconDownload, IconUsers, IconFilter, IconFile, IconSync, IconClock } from '@/app/components/icons';
 import TimeFilterBar from '@/app/components/TimeFilterBar';
 import DatePicker from '@/app/components/DatePicker';
 
@@ -106,6 +106,50 @@ export default function StaffDashboard() {
     const [filterChannel, setFilterChannel] = useState('all');
     const [filterStartDate, setFilterStartDate] = useState('');
     const [filterEndDate, setFilterEndDate] = useState('');
+
+    /* ---- Sync & Log state ---- */
+    const [syncing, setSyncing] = useState(false);
+    const [syncStatus, setSyncStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [showLogs, setShowLogs] = useState(false);
+    const [syncLogs, setSyncLogs] = useState<Array<{ id: number; status: string; conclusion: string | null; createdAt: string; duration: number | null; url: string }>>([]);
+    const [logsLoading, setLogsLoading] = useState(false);
+
+    const handleSync = useCallback(async () => {
+        setSyncing(true);
+        setSyncStatus(null);
+        try {
+            const res = await fetch('/api/marketing/sync', { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                setSyncStatus({ type: 'success', message: 'Đã kích hoạt sync! Dữ liệu sẽ cập nhật trong ~1 phút.' });
+                // Auto-refresh entries after 60s
+                setTimeout(() => {
+                    fetchEntries(activeCompanyId, dateRange.start, dateRange.end).then(setEntries);
+                }, 60000);
+            } else {
+                setSyncStatus({ type: 'error', message: data.error || 'Không thể kích hoạt sync' });
+            }
+        } catch {
+            setSyncStatus({ type: 'error', message: 'Lỗi kết nối server' });
+        } finally {
+            setSyncing(false);
+            setTimeout(() => setSyncStatus(null), 8000);
+        }
+    }, [activeCompanyId, dateRange.start, dateRange.end]);
+
+    const fetchLogs = useCallback(async () => {
+        setLogsLoading(true);
+        try {
+            const res = await fetch('/api/marketing/sync/logs');
+            const data = await res.json();
+            if (res.ok) setSyncLogs(data.runs || []);
+        } catch { /* ignore */ }
+        setLogsLoading(false);
+    }, []);
+
+    useEffect(() => {
+        if (showLogs) fetchLogs();
+    }, [showLogs, fetchLogs]);
 
     // Get campaigns for this company
     const companyCampaigns = useMemo(() => {
@@ -307,10 +351,29 @@ export default function StaffDashboard() {
                         Nhập số liệu leads hàng ngày
                     </p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setShowAddRow(true)} style={{ fontSize: 'var(--font-base)' }}>
-                    <IconPlus size={14} /> Thêm dòng
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="btn btn-primary" onClick={handleSync} disabled={syncing} style={{ fontSize: 'var(--font-base)' }}>
+                        <IconSync size={14} className={syncing ? 'spin' : ''} /> {syncing ? 'Đang sync...' : 'Sync Data'}
+                    </button>
+                    <button className="btn btn-outline" onClick={() => setShowLogs(true)} style={{ fontSize: 'var(--font-base)' }}>
+                        <IconClock size={14} /> Log Data
+                    </button>
+                </div>
             </div>
+
+            {/* Sync status toast */}
+            {syncStatus && (
+                <div className="card" style={{
+                    borderLeft: `3px solid ${syncStatus.type === 'success' ? 'var(--success)' : '#EF4444'}`,
+                    marginBottom: '1rem', padding: '0.75rem 1rem',
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    animation: 'slideUp 0.2s ease',
+                }}>
+                    {syncStatus.type === 'success' ? <IconCheck size={16} color="var(--success)" /> : <IconClose size={16} color="#EF4444" />}
+                    {syncStatus.message}
+                    <button onClick={() => setSyncStatus(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><IconClose size={14} /></button>
+                </div>
+            )}
 
             {/* Company selector cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.25rem' }}>
@@ -467,7 +530,7 @@ export default function StaffDashboard() {
                 <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                     <IconFile size={36} />
                     <p style={{ marginTop: '0.75rem', fontWeight: 500 }}>Chưa có dữ liệu</p>
-                    <p style={{ fontSize: 'var(--font-base)' }}>Nhấn "Thêm dòng" hoặc "Import CSV" để bắt đầu nhập liệu</p>
+                    <p style={{ fontSize: 'var(--font-base)' }}>Nhấn "Sync Data" để đồng bộ dữ liệu từ Google Sheet</p>
                 </div>
             )}
 
@@ -602,6 +665,73 @@ export default function StaffDashboard() {
                     </div>
                 );
             })()}
+
+            {/* ═══ Log Data Drawer ═══ */}
+            {showLogs && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', justifyContent: 'flex-end', zIndex: 200 }} onClick={() => setShowLogs(false)}>
+                    <div className="card" style={{ width: '100%', maxWidth: 420, height: '100%', borderRadius: 0, overflow: 'auto', animation: 'slideLeft 0.25s ease', padding: 0 }} onClick={e => e.stopPropagation()}>
+                        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 700 }}>📋 Lịch sử Sync</h2>
+                            <button onClick={() => setShowLogs(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}><IconClose size={20} /></button>
+                        </div>
+                        <div style={{ padding: '1rem 1.5rem' }}>
+                            {logsLoading ? (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Đang tải...</div>
+                            ) : syncLogs.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Chưa có lịch sử sync</div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    {syncLogs.map(run => {
+                                        const statusIcon = run.status === 'completed'
+                                            ? (run.conclusion === 'success' ? '✅' : '❌')
+                                            : '🔄';
+                                        const statusLabel = run.status === 'completed'
+                                            ? (run.conclusion === 'success' ? 'Thành công' : 'Thất bại')
+                                            : 'Đang chạy';
+                                        const statusColor = run.status === 'completed'
+                                            ? (run.conclusion === 'success' ? 'var(--success)' : '#EF4444')
+                                            : '#F59E0B';
+                                        const time = new Date(run.createdAt);
+                                        const timeStr = `${String(time.getDate()).padStart(2, '0')}/${String(time.getMonth() + 1).padStart(2, '0')} ${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
+
+                                        return (
+                                            <div key={run.id} style={{
+                                                padding: '0.75rem 1rem', borderRadius: 8,
+                                                border: '1px solid var(--border)',
+                                                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                            }}>
+                                                <span style={{ fontSize: '1.25rem' }}>{statusIcon}</span>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: 600, fontSize: 'var(--font-md)', color: statusColor }}>
+                                                        {statusLabel}
+                                                    </div>
+                                                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>
+                                                        {timeStr}{run.duration ? ` · ${run.duration}s` : ''}
+                                                    </div>
+                                                </div>
+                                                <a href={run.url} target="_blank" rel="noopener noreferrer"
+                                                    style={{ fontSize: 'var(--font-sm)', color: 'var(--primary)', textDecoration: 'none' }}>
+                                                    Chi tiết →
+                                                </a>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            <button className="btn btn-outline" onClick={fetchLogs} disabled={logsLoading} style={{ width: '100%', justifyContent: 'center', marginTop: '1rem', fontSize: 'var(--font-base)' }}>
+                                <IconSync size={14} /> Làm mới
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Spin animation for sync icon */}
+            <style>{`
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .spin { animation: spin 1s linear infinite; }
+                @keyframes slideLeft { from { transform: translateX(100%); } to { transform: translateX(0); } }
+            `}</style>
         </>
     );
 }
