@@ -16,7 +16,7 @@
  * Available companies: san, teennie, tgil
  */
 
-import { PrismaClient } from '@marketing-hub/db';
+import { PrismaClient } from '@prisma/client';
 import { parseArgs, validateDates, getDailyGrowthStats, printDailyGrowthReport } from './lib/aggregate-builder-utils.mjs';
 import { acquireLock, releaseLock, setupLockCleanup } from './lib/aggregate-lock-guard.mjs';
 import { rebuildAggregatesForCompany } from './lib/aggregate-rebuilder.mjs';

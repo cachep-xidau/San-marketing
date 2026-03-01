@@ -15,7 +15,7 @@
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { PrismaClient } from '@marketing-hub/db';
+import { PrismaClient } from '@prisma/client';
 import { parseCSV } from './lib/csv-parser.mjs';
 import { rebuildAggregates } from './lib/aggregate-updater.mjs';
 

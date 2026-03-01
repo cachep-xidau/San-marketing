@@ -3,7 +3,7 @@
  * Simplified version for inline use in import workflows.
  */
 
-import { PrismaClient } from '@marketing-hub/db';
+import { PrismaClient } from '@prisma/client';
 
 /**
  * Rebuild aggregates for specified companies and date range.
