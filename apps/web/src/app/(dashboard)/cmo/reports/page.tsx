@@ -6,6 +6,9 @@ import { type TimeRange } from '@/lib/daily-metrics';
 import { useCompany } from '../../layout';
 import { IconDownload, IconFilter, IconFile } from '@/app/components/icons';
 import TimeFilterBar from '@/app/components/TimeFilterBar';
+import { getMonthRange } from '@/lib/marketing-date-range';
+import { numOrZero } from '@/lib/marketing-data-helpers';
+import { fetchSummary, fetchCampaigns, fetchMasterStatus, type APICampaign } from '@/lib/marketing-api-client';
 
 /* ---- Types ---- */
 interface ReportRow {
@@ -23,28 +26,8 @@ interface ReportRow {
     budgetActual: number;
 }
 
-/* ---- API response types ---- */
 interface APISummary {
     companyId: string;
-    _sum: {
-        totalLead: number | null;
-        spam: number | null;
-        potential: number | null;
-        quality: number | null;
-        booked: number | null;
-        arrived: number | null;
-        closed: number | null;
-        bill: string | null;
-        budgetTarget: string | null;
-        budgetActual: string | null;
-    };
-    _count: number;
-}
-
-interface APICampaign {
-    companyId: string;
-    channel: string;
-    campaignName: string;
     _sum: {
         totalLead: number | null;
         spam: number | null;
@@ -64,36 +47,6 @@ interface APIMasterStatus {
     companyId: string;
     status: string;
     _count: number;
-}
-
-interface APIResponse {
-    summary: APISummary[];
-    campaigns: APICampaign[];
-    masterStatus: APIMasterStatus[];
-}
-
-/* ---- Helpers ---- */
-function numOrZero(v: number | string | null | undefined): number {
-    if (v === null || v === undefined) return 0;
-    if (typeof v === 'string') return parseFloat(v) || 0;
-    return v;
-}
-
-function getDateRange(range: TimeRange, customStart?: string, customEnd?: string): { start: string; end: string } {
-    if (range === 'custom' && customStart && customEnd) {
-        return { start: customStart, end: customEnd };
-    }
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const fmt = (d: Date) => d.toISOString().split('T')[0];
-
-    switch (range) {
-        case 'this_month': return { start: fmt(new Date(year, month, 1)), end: fmt(new Date(year, month + 1, 0)) };
-        case 'last_month': return { start: fmt(new Date(year, month - 1, 1)), end: fmt(new Date(year, month, 0)) };
-        case '3m': return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
-        default: return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
-    }
 }
 
 /* ---- Funnel Stage Definition ---- */
@@ -133,30 +86,35 @@ export default function ReportPage() {
     const [customEnd, setCustomEnd] = useState('');
     const [filterChannel, setFilterChannel] = useState('all');
 
-    // Real data from API
-    const [apiData, setApiData] = useState<APIResponse | null>(null);
+    // Real data from split APIs
+    const [summary, setSummary] = useState<APISummary[]>([]);
+    const [campaigns, setCampaigns] = useState<APICampaign[]>([]);
+    const [masterStatus, setMasterStatus] = useState<APIMasterStatus[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const { start, end } = getDateRange(timeRange, customStart, customEnd);
+    const { start, end } = getMonthRange(timeRange, customStart, customEnd);
 
-    // Fetch real data from DB
+    // Fetch real data from DB using split APIs
     useEffect(() => {
         setLoading(true);
-        fetch(`/api/marketing?start=${start}&end=${end}`)
-            .then(r => r.ok ? r.json() : null)
-            .then((data: APIResponse | null) => {
-                if (data) setApiData(data);
-                setLoading(false);
-            })
-            .catch(() => setLoading(false));
+        Promise.allSettled([
+            fetchSummary(start, end),
+            fetchCampaigns(start, end),
+            fetchMasterStatus(),
+        ]).then(([summaryData, campaignsData, masterStatusData]) => {
+            if (summaryData.status === 'fulfilled') setSummary(summaryData.value);
+            if (campaignsData.status === 'fulfilled') setCampaigns(campaignsData.value);
+            if (masterStatusData.status === 'fulfilled') setMasterStatus(masterStatusData.value);
+            setLoading(false);
+        });
     }, [start, end]);
 
     // Transform API campaigns → ReportRow[] per company
     const allReports = useMemo(() => {
-        if (!apiData?.campaigns) return {} as Record<string, ReportRow[]>;
+        if (!campaigns || campaigns.length === 0) return {} as Record<string, ReportRow[]>;
         const map: Record<string, ReportRow[]> = {};
         for (const co of COMPANIES) {
-            const coCampaigns = apiData.campaigns.filter(c => c.companyId === co.id);
+            const coCampaigns = campaigns.filter(c => c.companyId === co.id);
             map[co.id] = coCampaigns.map((c, i) => ({
                 id: `${co.id}-${i}`,
                 channel: c.channel,
@@ -173,7 +131,7 @@ export default function ReportPage() {
             }));
         }
         return map;
-    }, [apiData]);
+    }, [campaigns]);
 
     // Aggregated "Tổng công ty" = all companies combined
     const allCompanyRows = useMemo(() => {
@@ -202,10 +160,10 @@ export default function ReportPage() {
     const activeColor = activeCompanyObj?.color || '#6B6F76';
     const activeLabel = activeCompanyObj?.shortName?.toUpperCase() || 'TỔNG CÔNG TY';
 
-    // Build selector cards data from real API
+    // Build selector cards data from split APIs
     const selectorCards = useMemo(() => {
         const allTotals = companyTotals(allCompanyRows);
-        const ms = apiData?.masterStatus || [];
+        const ms = masterStatus || [];
         const allCampaignCount = new Set(allCompanyRows.map(r => r.campaignName)).size;
 
         return [
@@ -231,7 +189,7 @@ export default function ReportPage() {
                 };
             }),
         ];
-    }, [allReports, allCompanyRows, apiData]);
+    }, [allReports, allCompanyRows, masterStatus]);
 
     return (
         <>

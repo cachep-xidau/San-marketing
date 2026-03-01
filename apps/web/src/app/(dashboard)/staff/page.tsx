@@ -87,19 +87,27 @@ export default function StaffDashboard() {
         fetchEntries(activeCompanyId, dateRange.start, dateRange.end).then(setEntries);
     }, [activeCompanyId, dateRange.start, dateRange.end]);
 
-    // Fetch summary for ALL companies (for card metrics)
+    // Fetch summary for ALL companies (for card metrics) using split APIs
     useEffect(() => {
-        let url = `/api/marketing?start=${dateRange.start}&end=${dateRange.end}`;
-        fetch(url).then(r => r.ok ? r.json() : null).then(data => {
-            if (!data?.summary) return;
-            const map: Record<string, { campaigns: number; leads: number }> = {};
-            for (const s of data.summary) {
-                const coCampaigns = data.campaigns?.filter((c: { companyId: string }) => c.companyId === s.companyId) || [];
-                const uniqueNames = new Set(coCampaigns.map((c: { campaignName: string }) => c.campaignName));
-                map[s.companyId] = { campaigns: uniqueNames.size, leads: s._sum?.totalLead || 0 };
-            }
-            setCompanySummary(map);
-        }).catch(() => { });
+        const [summaryUrl, campaignsUrl] = [
+            `/api/marketing/summary?start=${dateRange.start}&end=${dateRange.end}`,
+            `/api/marketing/campaigns?start=${dateRange.start}&end=${dateRange.end}&limit=1000`,
+        ];
+        Promise.all([fetch(summaryUrl), fetch(campaignsUrl)])
+            .then(([summaryRes, campaignsRes]) => Promise.all([
+                summaryRes.ok ? summaryRes.json() : Promise.resolve([]),
+                campaignsRes.ok ? campaignsRes.json().then(d => d.campaigns || []) : Promise.resolve([]),
+            ]))
+            .then(([summaryData, campaignsData]) => {
+                if (!summaryData || summaryData.length === 0) return;
+                const map: Record<string, { campaigns: number; leads: number }> = {};
+                for (const s of summaryData) {
+                    const coCampaigns = campaignsData?.filter((c: { companyId: string }) => c.companyId === s.companyId) || [];
+                    const uniqueNames = new Set(coCampaigns.map((c: { campaignName: string }) => c.campaignName));
+                    map[s.companyId] = { campaigns: uniqueNames.size, leads: s._sum?.totalLead || 0 };
+                }
+                setCompanySummary(map);
+            }).catch(() => { });
     }, [dateRange.start, dateRange.end]);
     const [showAddRow, setShowAddRow] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { Timer } from '@/lib/api-timing';
 
 const GITHUB_OWNER = 'cachep-xidau';
 const GITHUB_REPO = 'San-marketing';
@@ -75,6 +76,7 @@ async function fetchJobLogs(token: string, runId: number): Promise<string | null
 }
 
 export async function GET() {
+    const timer = new Timer();
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
         return NextResponse.json(
@@ -84,6 +86,7 @@ export async function GET() {
     }
 
     try {
+        timer.mark('github_fetch');
         const res = await fetch(
             `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=10`,
             {
@@ -104,6 +107,7 @@ export async function GET() {
         }
 
         const data = await res.json();
+        timer.mark('parse_runs');
 
         // Process runs — fetch logs for completed runs (max 3 to limit API calls)
         const workflowRuns = data.workflow_runs || [];
@@ -137,6 +141,9 @@ export async function GET() {
                 };
             }),
         );
+
+        timer.mark('process_runs');
+        timer.end('GET /api/marketing/sync/logs', 'runs', { rows: runs.length });
 
         return NextResponse.json(
             { runs },

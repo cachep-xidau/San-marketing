@@ -2,14 +2,13 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Timer } from '@/lib/api-timing';
 import { withCache } from '@/lib/redis-cache';
-import { buildCampaignsKey } from '@/lib/cache-keys';
+import { buildChannelsKey } from '@/lib/cache-keys';
 
 const VALID_COMPANIES = ['san', 'teennie', 'tgil'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const CACHE_HEADERS = {
     'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
 };
-const DEFAULT_LIMIT = 100;
 
 export async function GET(request: Request) {
     const timer = new Timer();
@@ -17,8 +16,6 @@ export async function GET(request: Request) {
     const companyId = searchParams.get('companyId') || undefined;
     const startDate = searchParams.get('start');
     const endDate = searchParams.get('end');
-    const limitParam = searchParams.get('limit');
-    const offsetParam = searchParams.get('offset');
 
     if (companyId && !VALID_COMPANIES.includes(companyId)) {
         return NextResponse.json({ error: 'Invalid companyId' }, { status: 400 });
@@ -33,17 +30,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'start must be ≤ end' }, { status: 400 });
     }
 
-    const limit = limitParam ? parseInt(limitParam, 10) : DEFAULT_LIMIT;
-    const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
-
-    if (isNaN(limit) || limit <= 0 || limit > 1000) {
-        return NextResponse.json({ error: 'Invalid limit (1-1000)' }, { status: 400 });
-    }
-    if (isNaN(offset) || offset < 0) {
-        return NextResponse.json({ error: 'Invalid offset' }, { status: 400 });
-    }
-
-    const cacheKey = buildCampaignsKey(companyId, startDate, endDate, limit, offset);
+    const cacheKey = buildChannelsKey(companyId, startDate, endDate);
     const where: Record<string, unknown> = {};
     if (companyId) where.companyId = companyId;
     if (startDate || endDate) {
@@ -58,37 +45,27 @@ export async function GET(request: Request) {
         const result = await withCache(
             cacheKey,
             async () => {
-                const [data, total] = await Promise.all([
-                    prisma.marketingCampaignDaily.findMany({
-                        where,
-                        orderBy: [{ companyId: 'asc' }, { channel: 'asc' }, { campaignName: 'asc' }, { date: 'asc' }],
-                        take: limit,
-                        skip: offset,
-                    }),
-                    prisma.marketingCampaignDaily.count({ where }),
-                ]);
+                const data = await prisma.marketingChannelDaily.findMany({
+                    where,
+                    orderBy: [{ companyId: 'asc' }, { channel: 'asc' }, { date: 'asc' }],
+                });
 
                 timer.mark('query');
 
                 return {
                     data,
-                    meta: {
-                        totalRows: total,
-                        limit,
-                        offset,
-                        hasMore: offset + limit < total,
-                    },
+                    meta: { totalRows: data.length },
                 };
             },
             { ttl: 300 }
         );
 
         timer.mark('cache');
-        timer.end('GET /api/marketing/campaigns', cacheKey, { cache: 'hit', rows: result.data.length });
+        timer.end('GET /api/marketing/channels', cacheKey, { cache: 'hit', rows: result.data.length });
 
         return NextResponse.json(result, { headers: CACHE_HEADERS });
     } catch (error) {
-        console.error('Marketing campaigns API error:', error);
-        return NextResponse.json({ error: 'Failed to fetch campaigns data' }, { status: 500 });
+        console.error('Marketing channels API error:', error);
+        return NextResponse.json({ error: 'Failed to fetch channels data' }, { status: 500 });
     }
 }

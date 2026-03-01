@@ -64,18 +64,18 @@ enum FunnelStage {
 // === MODELS ===
 
 model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
+  id             String   @id @default(cuid())
+  email          String   @unique
   name           String
   password       String
   role           Role
   telegramChatId String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   notificationPrefs NotificationPreference[]
   dashboardConfigs  DashboardConfig[]
-  alertLogs         AlertLog[]              @relation("AcknowledgedAlerts")
+  alertLogs         AlertLog[]               @relation("AcknowledgedAlerts")
 }
 
 model NotificationPreference {
@@ -154,11 +154,11 @@ model Goal {
 }
 
 model AdSet {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   name       String
   externalId String?
   campaignId String
-  status     String @default("ACTIVE")
+  status     String  @default("ACTIVE")
 
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   ads      Ad[]
@@ -242,7 +242,7 @@ model AlertLog {
   decisionAction String?
 
   alertRule    AlertRule @relation(fields: [alertRuleId], references: [id], onDelete: Cascade)
-  acknowledger User?    @relation("AcknowledgedAlerts", fields: [acknowledgedBy], references: [id])
+  acknowledger User?     @relation("AcknowledgedAlerts", fields: [acknowledgedBy], references: [id])
 }
 
 model CampaignNote {
@@ -265,37 +265,37 @@ model ChannelFunnelMapping {
 }
 
 model SyncLog {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   channel          Channel
   status           String
-  recordsProcessed Int      @default(0)
+  recordsProcessed Int       @default(0)
   errors           Json?
-  startedAt        DateTime @default(now())
+  startedAt        DateTime  @default(now())
   completedAt      DateTime?
 }
 
 // === MARKETING FUNNEL DATA (from Google Sheets) ===
 
 model MarketingEntry {
-  id             String   @id @default(cuid())
-  companyId      String   // 'san', 'teennie', 'tgil'
-  date           DateTime @db.Date
-  month          String   // '03.2025'
-  campaignId     Int      // ID from sheet
-  channel        String   // 'Page', '2 PAGE TEENNIE', '3 PAGE TGIL', etc.
-  campaignName   String
-  totalLead      Int      @default(0)
-  spam           Int      @default(0)
-  potential       Int      @default(0) // TIỀM NĂNG
-  quality        Int      @default(0) // CHẤT LƯỢNG
-  booked         Int      @default(0) // ĐẶT HẸN
-  arrived        Int      @default(0) // ĐẾN PK
-  closed         Int      @default(0) // CHỐT
-  bill           Decimal  @default(0) @db.Decimal(15, 2) // BILL
-  budgetTarget   Decimal  @default(0) @db.Decimal(15, 2) // Ngân sách mục tiêu
-  budgetActual   Decimal  @default(0) @db.Decimal(15, 2) // Ngân sách thực tế
-  kpi            Decimal? @db.Decimal(10, 4)
-  createdAt      DateTime @default(now())
+  id           String   @id @default(cuid())
+  companyId    String // 'san', 'teennie', 'tgil'
+  date         DateTime @db.Date
+  month        String // '03.2025'
+  campaignId   Int // ID from sheet
+  channel      String // 'Page', '2 PAGE TEENNIE', '3 PAGE TGIL', etc.
+  campaignName String
+  totalLead    Int      @default(0)
+  spam         Int      @default(0)
+  potential    Int      @default(0) // TIỀM NĂNG
+  quality      Int      @default(0) // CHẤT LƯỢNG
+  booked       Int      @default(0) // ĐẶT HẸN
+  arrived      Int      @default(0) // ĐẾN PK
+  closed       Int      @default(0) // CHỐT
+  bill         Decimal  @default(0) @db.Decimal(15, 2) // BILL
+  budgetTarget Decimal  @default(0) @db.Decimal(15, 2) // Ngân sách mục tiêu
+  budgetActual Decimal  @default(0) @db.Decimal(15, 2) // Ngân sách thực tế
+  kpi          Decimal? @db.Decimal(10, 4)
+  createdAt    DateTime @default(now())
 
   @@index([companyId])
   @@index([date])
@@ -304,18 +304,88 @@ model MarketingEntry {
 }
 
 model CampaignMaster {
-  id          String   @id @default(cuid())
-  companyId   String   // 'san', 'teennie', 'tgil'
-  campaignId  Int      // ID from Master sheet
-  channel     String   // Kênh: Page San, Tiktok, etc.
-  name        String   // Tên chiến dịch
-  status      String   @default("TẮT") // BẬT or TẮT
-  startDate   String?  // Ngày bắt đầu
-  endDate     String?  // Ngày kết thúc
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  companyId  String // 'san', 'teennie', 'tgil'
+  campaignId Int // ID from Master sheet
+  channel    String // Kênh: Page San, Tiktok, etc.
+  name       String // Tên chiến dịch
+  status     String   @default("TẮT") // BẬT or TẮT
+  startDate  String? // Ngày bắt đầu
+  endDate    String? // Ngày kết thúc
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([companyId, campaignId])
   @@index([companyId])
   @@index([status])
+}
+
+// === READ MODELS (Pre-aggregated for Dashboard) ===
+
+model MarketingSummaryDaily {
+  id           String   @id @default(cuid())
+  companyId    String
+  date         DateTime @db.Date
+  totalLead    Int      @default(0)
+  spam         Int      @default(0)
+  potential    Int      @default(0)
+  quality      Int      @default(0)
+  booked       Int      @default(0)
+  arrived      Int      @default(0)
+  closed       Int      @default(0)
+  bill         Decimal  @default(0) @db.Decimal(15, 2)
+  budgetTarget Decimal  @default(0) @db.Decimal(15, 2)
+  budgetActual Decimal  @default(0) @db.Decimal(15, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([companyId, date])
+  @@index([companyId, date])
+}
+
+model MarketingChannelDaily {
+  id           String   @id @default(cuid())
+  companyId    String
+  date         DateTime @db.Date
+  channel      String
+  totalLead    Int      @default(0)
+  spam         Int      @default(0)
+  potential    Int      @default(0)
+  quality      Int      @default(0)
+  booked       Int      @default(0)
+  arrived      Int      @default(0)
+  closed       Int      @default(0)
+  bill         Decimal  @default(0) @db.Decimal(15, 2)
+  budgetTarget Decimal  @default(0) @db.Decimal(15, 2)
+  budgetActual Decimal  @default(0) @db.Decimal(15, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([companyId, date, channel])
+  @@index([companyId, date])
+  @@index([companyId, date, channel])
+}
+
+model MarketingCampaignDaily {
+  id           String   @id @default(cuid())
+  companyId    String
+  date         DateTime @db.Date
+  channel      String
+  campaignName String
+  totalLead    Int      @default(0)
+  spam         Int      @default(0)
+  potential    Int      @default(0)
+  quality      Int      @default(0)
+  booked       Int      @default(0)
+  arrived      Int      @default(0)
+  closed       Int      @default(0)
+  bill         Decimal  @default(0) @db.Decimal(15, 2)
+  budgetTarget Decimal  @default(0) @db.Decimal(15, 2)
+  budgetActual Decimal  @default(0) @db.Decimal(15, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([companyId, date, campaignName])
+  @@index([companyId, date])
+  @@index([companyId, date, campaignName])
 }

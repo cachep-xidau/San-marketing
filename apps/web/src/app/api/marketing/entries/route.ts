@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Timer } from '@/lib/api-timing';
 
 const VALID_COMPANIES = ['san', 'teennie', 'tgil'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function GET(request: Request) {
+    const timer = new Timer();
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('companyId');
     const channel = searchParams.get('channel');
@@ -41,6 +43,7 @@ export async function GET(request: Request) {
     }
 
     try {
+        timer.mark('validation');
         const entries = await prisma.marketingEntry.findMany({
             where,
             orderBy: { date: 'desc' },
@@ -72,9 +75,12 @@ export async function GET(request: Request) {
             };
         });
 
-        return NextResponse.json({ entries: rows, total: rows.length }, {
+        const response = NextResponse.json({ entries: rows, total: rows.length }, {
             headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
         });
+
+        timer.end('GET /api/marketing/entries', `${limit}:${channel || 'all'}`, { rows: rows.length });
+        return response;
     } catch (error) {
         console.error('Marketing entries API error:', error);
         return NextResponse.json({ error: 'Failed to fetch entries' }, { status: 500 });

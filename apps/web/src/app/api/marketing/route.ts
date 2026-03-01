@@ -1,5 +1,15 @@
+/**
+ * @deprecated This monolithic endpoint is deprecated.
+ * Use the new decomposed endpoints for better performance:
+ * - /api/marketing/summary - Company summary totals
+ * - /api/marketing/trend - Daily trend data
+ * - /api/marketing/channels - Channel breakdown
+ * - /api/marketing/campaigns - Campaign breakdown (with pagination)
+ * - /api/marketing/master-status - Campaign master BẬT/TẮT counts
+ */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Timer } from '@/lib/api-timing';
 
 const VALID_COMPANIES = ['san', 'teennie', 'tgil'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -13,6 +23,7 @@ const CACHE_HEADERS = {
 };
 
 export async function GET(request: Request) {
+    const timer = new Timer();
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('companyId') || undefined;
     const startDate = searchParams.get('start');
@@ -40,6 +51,8 @@ export async function GET(request: Request) {
     const cacheKey = `${companyId || 'all'}:${startDate || ''}:${endDate || ''}`;
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.ts < CACHE_TTL) {
+        timer.mark('cache');
+        timer.end('GET /api/marketing', cacheKey, { cache: 'hit', rows: 0 });
         return NextResponse.json(cached.data, { headers: CACHE_HEADERS });
     }
 
@@ -62,6 +75,8 @@ export async function GET(request: Request) {
     } as const;
 
     try {
+        timer.mark('validation');
+
         // All 5 queries run in PARALLEL
         const [summary, daily, campaigns, channels, masterStatus] = await Promise.all([
             // 1. Aggregated summary by company
@@ -110,6 +125,8 @@ export async function GET(request: Request) {
             }),
         ]);
 
+        timer.mark('queries');
+
         const result = {
             summary,
             daily,
@@ -127,6 +144,9 @@ export async function GET(request: Request) {
 
         // Store in cache
         cache.set(cacheKey, { data: result, ts: Date.now() });
+
+        timer.mark('cache_store');
+        timer.end('GET /api/marketing', cacheKey, { cache: 'miss', rows: daily.length });
 
         return NextResponse.json(result, { headers: CACHE_HEADERS });
     } catch (error) {

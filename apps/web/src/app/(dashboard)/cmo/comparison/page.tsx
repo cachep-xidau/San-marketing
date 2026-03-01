@@ -5,6 +5,9 @@ import { CHANNEL_LABELS, CHANNEL_COLORS, formatVND } from '@marketing-hub/shared
 import { type TimeRange } from '@/lib/daily-metrics';
 import { IconCheck, IconAlertTriangle, IconTrendUp, IconChart } from '@/app/components/icons';
 import TimeFilterBar from '@/app/components/TimeFilterBar';
+import { getMonthRange } from '@/lib/marketing-date-range';
+import { numOrZero } from '@/lib/marketing-data-helpers';
+import { fetchChannels, fetchCampaigns, fetchTrend, type APIChannel, type APICampaign, type APIDaily } from '@/lib/marketing-api-client';
 
 /* ---- Types ---- */
 interface ChannelMetrics {
@@ -14,62 +17,6 @@ interface ChannelMetrics {
     cpl: number;
     quality: number;
     campaigns: number;
-}
-
-/* ---- API response types ---- */
-interface APIChannel {
-    companyId: string;
-    channel: string;
-    _sum: {
-        totalLead: number | null;
-        quality: number | null;
-        budgetActual: string | null;
-    };
-}
-
-interface APICampaign {
-    companyId: string;
-    channel: string;
-    campaignName: string;
-}
-
-interface APIDaily {
-    date: string;
-    companyId: string;
-    _sum: {
-        totalLead: number | null;
-        budgetActual: string | null;
-    };
-}
-
-interface APIResponse {
-    channels: APIChannel[];
-    campaigns: APICampaign[];
-    daily: APIDaily[];
-}
-
-/* ---- Helpers ---- */
-function numOrZero(v: number | string | null | undefined): number {
-    if (v === null || v === undefined) return 0;
-    if (typeof v === 'string') return parseFloat(v) || 0;
-    return v;
-}
-
-function getDateRange(range: TimeRange, customStart?: string, customEnd?: string): { start: string; end: string } {
-    if (range === 'custom' && customStart && customEnd) {
-        return { start: customStart, end: customEnd };
-    }
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const fmt = (d: Date) => d.toISOString().split('T')[0];
-
-    switch (range) {
-        case 'this_month': return { start: fmt(new Date(year, month, 1)), end: fmt(new Date(year, month + 1, 0)) };
-        case 'last_month': return { start: fmt(new Date(year, month - 1, 1)), end: fmt(new Date(year, month, 0)) };
-        case '3m': return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
-        default: return { start: fmt(new Date(year, month - 2, 1)), end: fmt(new Date(year, month + 1, 0)) };
-    }
 }
 
 /* SVG Mini Bar Chart */
@@ -172,23 +119,39 @@ function DonutChart({ data, metric, label }: { data: ChannelMetrics[]; metric: k
     );
 }
 
+/* Data fetching for comparison page */
+async function fetchComparisonData(start: string, end: string) {
+    const [channelsData, campaignsData, trendData] = await Promise.allSettled([
+        fetchChannels(start, end),
+        fetchCampaigns(start, end),
+        fetchTrend(start, end),
+    ]);
+
+    return {
+        channels: channelsData.status === 'fulfilled' ? channelsData.value : [],
+        campaigns: campaignsData.status === 'fulfilled' ? campaignsData.value : [],
+        daily: trendData.status === 'fulfilled' ? trendData.value : [],
+    };
+}
+
 export default function ComparisonPage() {
     const [timeRange, setTimeRange] = useState<TimeRange>('3m');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
 
-    const { start, end } = getDateRange(timeRange, customStart, customEnd);
+    const { start, end } = getMonthRange(timeRange, customStart, customEnd);
 
-    // Real data from API
-    const [apiData, setApiData] = useState<APIResponse | null>(null);
+    // Real data from split APIs
+    const [channels, setChannels] = useState<APIChannel[]>([]);
+    const [campaigns, setCampaigns] = useState<APICampaign[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setLoading(true);
-        fetch(`/api/marketing?start=${start}&end=${end}`)
-            .then(r => r.ok ? r.json() : null)
-            .then((data: APIResponse | null) => {
-                if (data) setApiData(data);
+        fetchComparisonData(start, end)
+            .then(data => {
+                setChannels(data.channels);
+                setCampaigns(data.campaigns);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
@@ -196,11 +159,11 @@ export default function ComparisonPage() {
 
     // Build channel metrics from real API data
     const data = useMemo<ChannelMetrics[]>(() => {
-        if (!apiData?.channels) return [];
+        if (!channels || channels.length === 0) return [];
 
         // Aggregate by channel (across all companies)
         const byChannel = new Map<string, { leads: number; spend: number; quality: number }>();
-        for (const ch of apiData.channels) {
+        for (const ch of channels) {
             const key = ch.channel;
             const existing = byChannel.get(key) || { leads: 0, spend: 0, quality: 0 };
             existing.leads += numOrZero(ch._sum.totalLead);
@@ -211,8 +174,8 @@ export default function ComparisonPage() {
 
         // Count unique campaigns per channel
         const campaignsByChannel = new Map<string, Set<string>>();
-        if (apiData.campaigns) {
-            for (const c of apiData.campaigns) {
+        if (campaigns && campaigns.length > 0) {
+            for (const c of campaigns) {
                 const set = campaignsByChannel.get(c.channel) || new Set();
                 set.add(c.campaignName);
                 campaignsByChannel.set(c.channel, set);
@@ -229,20 +192,12 @@ export default function ComparisonPage() {
                 campaigns: campaignsByChannel.get(channel)?.size || 0,
             }))
             .sort((a, b) => b.leads - a.leads);
-    }, [apiData]);
+    }, [channels, campaigns]);
 
-    // Daily leads by channel for sparklines
+    // Daily leads by channel for sparklines (placeholder - needs per-channel daily data)
     const dailyByChannel = useMemo<Record<string, number[]>>(() => {
-        if (!apiData?.daily) return {};
-        const result: Record<string, Map<string, number>> = {};
-
-        for (const d of apiData.daily) {
-            // We don't have per-channel daily data from the current API (it groups by date+companyId)
-            // So we skip sparklines for now — they need a new groupBy
-        }
-
         return {};
-    }, [apiData]);
+    }, []);
 
     const totalSpend = data.reduce((s, d) => s + d.spend, 0);
     const totalLeads = data.reduce((s, d) => s + d.leads, 0);
