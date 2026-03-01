@@ -173,7 +173,7 @@ function DonutChart({ data, metric, label }: { data: ChannelMetrics[]; metric: k
 }
 
 export default function ComparisonPage() {
-    const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
+    const [timeRange, setTimeRange] = useState<TimeRange>('3m');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
 

@@ -55,7 +55,7 @@ export default function StaffDashboard() {
     const activeCompany = COMPANIES.find(c => c.id === activeCompanyId);
 
     const [entries, setEntries] = useState<LeadEntry[]>([]);
-    const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
+    const [timeRange, setTimeRange] = useState<TimeRange>('3m');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [companySummary, setCompanySummary] = useState<Record<string, { campaigns: number; leads: number }>>({});

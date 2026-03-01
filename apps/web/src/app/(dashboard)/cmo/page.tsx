@@ -240,7 +240,7 @@ function ChartCard({
 export default function CMODashboard() {
     const [user, setUser] = useState<{ name: string; role: string } | null>(null);
     const { selectedCompanyId } = useCompany();
-    const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
+    const [timeRange, setTimeRange] = useState<TimeRange>('3m');
     const [activeCard, setActiveCard] = useState<string>('all');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');

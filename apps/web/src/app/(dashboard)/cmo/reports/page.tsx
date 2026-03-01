@@ -128,7 +128,7 @@ export default function ReportPage() {
     const [activeCompanyId, setActiveCompanyId] = useState<string>(
         selectedCompanyId === 'all' ? 'all' : selectedCompanyId
     );
-    const [timeRange, setTimeRange] = useState<TimeRange>('this_month');
+    const [timeRange, setTimeRange] = useState<TimeRange>('3m');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [filterChannel, setFilterChannel] = useState('all');

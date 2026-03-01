@@ -138,31 +138,31 @@ function getMonthRange(range: TimeRange, customStart?: string, customEnd?: strin
         return { start: customStart, end: customEnd };
     }
 
-    // Reference date: Feb 2026 (latest data)
+    // Use UTC to match DB dates stored via Date.UTC()
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0-indexed
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth(); // 0-indexed
 
     switch (range) {
         case 'this_month': {
-            const start = new Date(year, month, 1);
-            const end = new Date(year, month + 1, 0);
+            const start = new Date(Date.UTC(year, month, 1));
+            const end = new Date(Date.UTC(year, month + 1, 0));
             return { start: fmt(start), end: fmt(end) };
         }
         case 'last_month': {
-            const start = new Date(year, month - 1, 1);
-            const end = new Date(year, month, 0);
+            const start = new Date(Date.UTC(year, month - 1, 1));
+            const end = new Date(Date.UTC(year, month, 0));
             return { start: fmt(start), end: fmt(end) };
         }
         case '3m': {
-            const start = new Date(year, month - 2, 1);
-            const end = new Date(year, month + 1, 0);
+            const start = new Date(Date.UTC(year, month - 2, 1));
+            const end = new Date(Date.UTC(year, month + 1, 0));
             return { start: fmt(start), end: fmt(end) };
         }
         default: {
             // fallback: 3 months
-            const start = new Date(year, month - 2, 1);
-            const end = new Date(year, month + 1, 0);
+            const start = new Date(Date.UTC(year, month - 2, 1));
+            const end = new Date(Date.UTC(year, month + 1, 0));
             return { start: fmt(start), end: fmt(end) };
         }
     }
