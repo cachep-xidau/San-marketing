@@ -45,29 +45,31 @@ export async function GET(request: Request) {
         const result = await withCache(
             cacheKey,
             async () => {
-                const data = await prisma.marketingSummaryDaily.findMany({
+                const data = await prisma.marketingSummaryDaily.groupBy({
+                    by: ['date', 'companyId'],
                     where,
                     orderBy: { date: 'asc' },
+                    _sum: {
+                        totalLead: true,
+                        spam: true,
+                        potential: true,
+                        quality: true,
+                        booked: true,
+                        arrived: true,
+                        closed: true,
+                        bill: true,
+                        budgetActual: true,
+                    },
                 });
 
                 timer.mark('query');
-
-                return {
-                    data,
-                    meta: {
-                        totalRows: data.length,
-                        dateRange: {
-                            start: data[0]?.date,
-                            end: data[data.length - 1]?.date,
-                        },
-                    },
-                };
+                return data;
             },
             { ttl: 300 }
         );
 
         timer.mark('cache');
-        timer.end('GET /api/marketing/trend', cacheKey, { cache: 'hit', rows: result.data.length });
+        timer.end('GET /api/marketing/trend', cacheKey, { cache: 'hit', rows: result.length });
 
         return NextResponse.json(result, { headers: CACHE_HEADERS });
     } catch (error) {

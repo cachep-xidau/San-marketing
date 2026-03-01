@@ -35,17 +35,13 @@ export async function GET(request: Request) {
                 });
 
                 timer.mark('query');
-
-                return {
-                    data,
-                    meta: { totalRows: data.length },
-                };
+                return data;
             },
             { ttl: 600 }
         );
 
         timer.mark('cache');
-        timer.end('GET /api/marketing/master-status', cacheKey, { cache: 'hit', rows: result.data.length });
+        timer.end('GET /api/marketing/master-status', cacheKey, { cache: 'hit', rows: result.length });
 
         return NextResponse.json(result, { headers: CACHE_HEADERS });
     } catch (error) {

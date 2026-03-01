@@ -72,6 +72,14 @@ export interface APIMasterStatus {
     _count: number;
 }
 
+function parseArrayPayload<T>(payload: unknown): T[] {
+    if (Array.isArray(payload)) return payload as T[];
+    if (payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown[] }).data)) {
+        return (payload as { data: T[] }).data;
+    }
+    return [];
+}
+
 /* ---- Fetch functions ---- */
 
 /**
@@ -80,7 +88,7 @@ export interface APIMasterStatus {
 export async function fetchSummary(start: string, end: string): Promise<APISummary[]> {
     const res = await fetch(`/api/marketing/summary?start=${start}&end=${end}`);
     if (!res.ok) return [];
-    return res.json();
+    return parseArrayPayload<APISummary>(await res.json());
 }
 
 /**
@@ -89,7 +97,7 @@ export async function fetchSummary(start: string, end: string): Promise<APISumma
 export async function fetchTrend(start: string, end: string): Promise<APIDaily[]> {
     const res = await fetch(`/api/marketing/trend?start=${start}&end=${end}`);
     if (!res.ok) return [];
-    return res.json();
+    return parseArrayPayload<APIDaily>(await res.json());
 }
 
 /**
@@ -98,7 +106,7 @@ export async function fetchTrend(start: string, end: string): Promise<APIDaily[]
 export async function fetchChannels(start: string, end: string): Promise<APIChannel[]> {
     const res = await fetch(`/api/marketing/channels?start=${start}&end=${end}`);
     if (!res.ok) return [];
-    return res.json();
+    return parseArrayPayload<APIChannel>(await res.json());
 }
 
 /**
@@ -108,7 +116,9 @@ export async function fetchCampaigns(start: string, end: string, page = 1, limit
     const res = await fetch(`/api/marketing/campaigns?start=${start}&end=${end}&page=${page}&limit=${limit}`);
     if (!res.ok) return [];
     const data = await res.json();
-    return data.campaigns || [];
+    if (Array.isArray(data?.campaigns)) return data.campaigns;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
 }
 
 /**
@@ -117,7 +127,7 @@ export async function fetchCampaigns(start: string, end: string, page = 1, limit
 export async function fetchMasterStatus(): Promise<APIMasterStatus[]> {
     const res = await fetch('/api/marketing/master-status');
     if (!res.ok) return [];
-    return res.json();
+    return parseArrayPayload<APIMasterStatus>(await res.json());
 }
 
 /**

@@ -6,6 +6,7 @@
  */
 
 export const CACHE_PREFIX = 'marketing';
+export const CACHE_VERSION = 'v2';
 
 export function buildSummaryKey(
     companyId: string | null | undefined,
@@ -14,6 +15,7 @@ export function buildSummaryKey(
 ): string {
     return [
         CACHE_PREFIX,
+        CACHE_VERSION,
         'summary',
         companyId ?? 'all',
         startDate ?? '',
@@ -28,6 +30,7 @@ export function buildTrendKey(
 ): string {
     return [
         CACHE_PREFIX,
+        CACHE_VERSION,
         'trend',
         companyId ?? 'all',
         startDate ?? '',
@@ -42,6 +45,7 @@ export function buildChannelsKey(
 ): string {
     return [
         CACHE_PREFIX,
+        CACHE_VERSION,
         'channels',
         companyId ?? 'all',
         startDate ?? '',
@@ -58,6 +62,7 @@ export function buildCampaignsKey(
 ): string {
     return [
         CACHE_PREFIX,
+        CACHE_VERSION,
         'campaigns',
         companyId ?? 'all',
         startDate ?? '',
@@ -68,7 +73,7 @@ export function buildCampaignsKey(
 }
 
 export function buildMasterStatusKey(companyId: string | null | undefined): string {
-    return [CACHE_PREFIX, 'master-status', companyId ?? 'all'].join(':');
+    return [CACHE_PREFIX, CACHE_VERSION, 'master-status', companyId ?? 'all'].join(':');
 }
 
 export function buildInvalidationPattern(

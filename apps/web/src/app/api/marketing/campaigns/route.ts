@@ -59,19 +59,36 @@ export async function GET(request: Request) {
             cacheKey,
             async () => {
                 const [data, total] = await Promise.all([
-                    prisma.marketingCampaignDaily.findMany({
+                    prisma.marketingCampaignDaily.groupBy({
+                        by: ['companyId', 'channel', 'campaignName'],
                         where,
-                        orderBy: [{ companyId: 'asc' }, { channel: 'asc' }, { campaignName: 'asc' }, { date: 'asc' }],
+                        _sum: {
+                            totalLead: true,
+                            spam: true,
+                            potential: true,
+                            quality: true,
+                            booked: true,
+                            arrived: true,
+                            closed: true,
+                            bill: true,
+                            budgetTarget: true,
+                            budgetActual: true,
+                        },
+                        _count: true,
+                        orderBy: [{ companyId: 'asc' }, { channel: 'asc' }, { campaignName: 'asc' }],
                         take: limit,
                         skip: offset,
                     }),
-                    prisma.marketingCampaignDaily.count({ where }),
+                    prisma.marketingCampaignDaily.groupBy({
+                        by: ['companyId', 'channel', 'campaignName'],
+                        where,
+                    }).then(rows => rows.length),
                 ]);
 
                 timer.mark('query');
 
                 return {
-                    data,
+                    campaigns: data,
                     meta: {
                         totalRows: total,
                         limit,
@@ -84,7 +101,7 @@ export async function GET(request: Request) {
         );
 
         timer.mark('cache');
-        timer.end('GET /api/marketing/campaigns', cacheKey, { cache: 'hit', rows: result.data.length });
+        timer.end('GET /api/marketing/campaigns', cacheKey, { cache: 'hit', rows: result.campaigns.length });
 
         return NextResponse.json(result, { headers: CACHE_HEADERS });
     } catch (error) {

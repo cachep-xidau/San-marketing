@@ -47,23 +47,32 @@ export async function GET(request: Request) {
             async () => {
                 timer.mark('query');
 
-                const data = await prisma.marketingSummaryDaily.findMany({
+                const data = await prisma.marketingSummaryDaily.groupBy({
+                    by: ['companyId'],
                     where,
-                    orderBy: { companyId: 'asc' },
+                    _sum: {
+                        totalLead: true,
+                        spam: true,
+                        potential: true,
+                        quality: true,
+                        booked: true,
+                        arrived: true,
+                        closed: true,
+                        bill: true,
+                        budgetTarget: true,
+                        budgetActual: true,
+                    },
+                    _count: true,
                 });
 
                 timer.mark('query');
-
-                return {
-                    data,
-                    meta: { totalRows: data.length },
-                };
+                return data;
             },
             { ttl: 300 }
         );
 
         timer.mark('cache');
-        timer.end('GET /api/marketing/summary', cacheKey, { cache: 'hit', rows: result.data.length });
+        timer.end('GET /api/marketing/summary', cacheKey, { cache: 'hit', rows: result.length });
 
         return NextResponse.json(result, { headers: CACHE_HEADERS });
     } catch (error) {
